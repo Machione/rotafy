@@ -1,17 +1,32 @@
 import toml
-from . import chore, person
+from typing import Iterable
+import chore, person
+
 
 class Config:
     def __init__(self, toml_file_path: str) -> None:
         self.path = toml_file_path
         self.raw = toml.load(self.path)
         
+        self.lookahead_days = self.raw.get("lookahead_days", 14)
+        self.clicksend_username = self.raw.get("clicksend_username")
+        self.clicksend_api_key = self.raw.get("clicksend_api_key")
+        
         self.chores = set()
-        for raw_chore in self.raw.get("chore", []):
+        for ordinal, raw_chore in enumerate(self.raw.get("chore", [])):
             this_chore = chore.Chore(
                 raw_chore.get("name"),
+                ordinal,
                 raw_chore.get("recurrence"),
                 raw_chore.get("notify"),
+                raw_chore.get(
+                    "required_training_sessions", 
+                    self.raw.get("default_number_of_training_sessions")
+                ),
+                raw_chore.get(
+                    "required_shadowing_sessions",
+                    self.raw.get("default_number_of_shadowing_sessions")
+                ),
                 raw_chore.get("exceptions", [])
             )
             self.chores.add(this_chore)
@@ -27,8 +42,8 @@ class Config:
             
             this_person = person.Person(
                 raw_person.get("name"),
-                str(raw_person.get("telephone")),
                 this_person_skills,
+                str(raw_person.get("telephone")),
                 raw_person.get("unavailable", []),
                 this_person_training
             )
@@ -48,7 +63,10 @@ class Config:
         
         return s
     
-    def _get_chores_from_names(self, names: list[str]) -> set[chore.Chore]:
+    def _get_chores_from_names(
+            self, 
+            names: Iterable[str]
+        ) -> Iterable[chore.Chore]:
         if len(names) == 1:
             singleton_name = names[0].lower()
             if singleton_name in ["any", "all"]:

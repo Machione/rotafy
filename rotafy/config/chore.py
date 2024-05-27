@@ -1,32 +1,47 @@
 import recurrent
 import datetime
 from dateutil import rrule
+from typing import Iterable
+
 
 class Chore:
     def __init__(
             self, 
             name: str, 
+            ordinal: int, 
             recurrence: str, 
-            notify: bool | str, 
-            exceptions: list[datetime.date]
+            notify: int | bool, 
+            num_training_sessions: int,
+            num_shadowing_sessions: int,
+            exceptions: Iterable[datetime.date] = []
         ) -> None:
         self.name = name
+        self.ordinal = ordinal
         self._raw_recurrence = recurrence
         self.recurring_rule = self.generate_rrule(recurrence)
-        self._raw_notify = notify
         self.notify = notify
+        self.num_training_sessions = num_training_sessions
+        self.num_shadowing_sessions = num_shadowing_sessions
         self.exceptions = exceptions
     
     def __repr__(self) -> str:
         s = (
-            f"Chore({self.name}, {self._raw_recurrence}, {self._raw_notify}, "
-            f"{self.exceptions})"
+            f"Chore({self.name}, {self.ordinal}, {self._raw_recurrence}, "
+            f"{self._raw_notify}, {self.num_training_sessions}, "
+            f"{self.num_shadowing_sessions}, {self.exceptions})"
         )
         return s
     
     def __str__(self) -> str:
         return self.__repr__()
-        
+    
+    def __eq__(self, other) -> bool:
+        return other and self.name == other.name
+    
+    def __hash__(self) -> int:
+        return hash(self.name)
+    
+    
     def generate_rrule(self, recurrence: str) -> rrule.rrule:
         start_of_today = datetime.datetime.combine(
             datetime.datetime.today(),
@@ -40,6 +55,22 @@ class Chore:
         rule = rrule.rrulestr(recurring_event_rrule)
         rule = rule.replace(dtstart=start_of_today)
         return rule
+    
+    def on(self, date: datetime.date) -> bool:
+        timestamp = datetime.datetime.combine(date, datetime.time.min)
+        in_rrule = self.recurring_rule.after(timestamp, inc=True) == timestamp
+        if date in self.exceptions:
+            return not(in_rrule)
+            
+        return in_rrule
+    
+    def next(self, start_date: datetime.date) -> datetime.date:
+        timestamp = datetime.datetime.combine(start_date, datetime.time.min)
+        next_date = self.recurring_rule.after(timestamp)
+        while next_date.date() in self.exceptions:
+            next_date = self.recurring_rule.after(next_date)
+        
+        return next_date.date()
         
     
     @property
@@ -55,22 +86,9 @@ class Chore:
             )
         
         self._name = value.strip()
-    
-    @property
-    def notify(self) -> bool | rrule.rrule:
-        return self._notify
-    
-    @notify.setter
-    def notify(self, value: bool | str) -> None:
-        if isinstance(value, str):
-            self._notify = self.generate_rrule(value)
-        elif value == True: 
-            self._notify = self.recurring_rule
-        else:
-            self._notify = self.generate_rrule("never")
 
 
-def find_chore(chore_name: str, chores: list[Chore]) -> Chore:
+def find_chore(chore_name: str, chores: Iterable[Chore]) -> Chore:
     for chore in chores:
         if chore.name == chore_name:
             return chore
