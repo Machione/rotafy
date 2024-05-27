@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "rotafy"
+version = "0.1.0"
+description = "Build, update, and delegate a rota/roster of chores, notifying individuals when their scheduled task is upcoming"
+authors = ["Ryan McKeown <ryanmckeown@mail4me.com>"]
+license = "GPL-3.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+recurrent = "^0.4.1"
+toml = "^0.10.2"
+python-dateutil = "^2.9.0.post0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

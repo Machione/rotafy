@@ -1,0 +1,23 @@
+[[chore]]
+name = "Dishes"
+recurrence = "Daily"
+notify = true
+
+[[chore]]
+name = "Hoovering"
+recurrence = "Saturdays"
+notify = "Fridays"
+exceptions = [2024-06-01, 2024-06-03]
+
+
+[[person]]
+name = "Ryan"
+telephone = "+447925057529"
+skills = ["ALL"]
+
+[[person]]
+name = "Mark"
+telephone = "+447925057529"
+skills = ["Dishes"]
+unavailable = 2024-06-01
+training = ["Hoovering"]
