@@ -1,6 +1,6 @@
 import toml
 from typing import Iterable
-import chore, person
+from rotafy.config import chore, person
 
 
 class Config:

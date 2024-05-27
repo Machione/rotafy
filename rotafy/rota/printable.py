@@ -3,7 +3,7 @@ import pandas
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-import rota
+from rotafy.rota import rota
 
 
 class PrintableRota(rota.Rota):
@@ -41,14 +41,7 @@ class PrintableRota(rota.Rota):
             raise Warning("There is no data to draw.")
             return None
         
-        banding_light = (1, 1, 1) # white
-        banding_dark = (0.965, 0.965, 0.965) # primary gray
         heading_colour = (0.083, 0.203, 0.273) # primary blue
-        
-        row_banding = [
-            [[banding_light, banding_dark][i % 2]] * width
-            for i in range(height)
-        ]
         
         plt.rcParams["font.family"] = "Inter,sans-serif"
         plt.rcParams["font.size"] = 11
@@ -59,7 +52,6 @@ class PrintableRota(rota.Rota):
         table = ax.table(
             cellText=df_separate.values,
             cellLoc="center",
-            cellColours=row_banding,
             rowLabels=df_separate.index,
             rowLoc="right",
             rowColours=[heading_colour] * height,
@@ -70,10 +62,10 @@ class PrintableRota(rota.Rota):
         )
         
         for c in range(width):
-            table[0, c].get_text().set_color(banding_dark)
+            table[0, c].get_text().set_color("white")
         
         for r in range(height):
-            table[r + 1, -1].get_text().set_color(banding_dark)
+            table[r + 1, -1].get_text().set_color("white")
         
         return fig
     
@@ -95,26 +87,34 @@ class PrintableRota(rota.Rota):
     @property
     def dataframe(self) -> pandas.DataFrame:
         all_chores = set(
-            assignment.chore for row in self.rows for assignment in row
+            assignment.chore
+            for row in self.rows
+            for assignment in row.assignments
         )
         ordered_chores = list(all_chores)
         ordered_chores.sort(key=lambda c: c.ordinal)
+        ordered_chore_names = [chore.name for chore in ordered_chores]
         self.sort()
         
-        data = {
-            row.date: [row[chore.name] for chore in ordered_chores]
-            for row in self.rows
-        }
-        df = pandas.Dataframe.from_dict(
+        data = {}
+        for row in self.rows:
+            row_data = []
+            for chore in ordered_chore_names:
+                assigned = row[chore]
+                if assigned is None:
+                    row_data.append(None)
+                else:
+                    row_data.append(str(assigned))
+                
+            data[row.date] = row_data
+        
+        df = pandas.DataFrame.from_dict(
             data,
             orient="index", 
-            columns=ordered_chores
+            columns=ordered_chore_names
         )
-        start_of_today = datetime.datetime.combine(
-            datetime.datetime.today(), 
-            datetime.time.min
-        )
-        min_ts = pandas.Timestamp(start_of_today)
+        today = datetime.datetime.today().date()
+        min_ts = pandas.Timestamp(today).date()
         df = df[df.index >= min_ts]
         df.index = df.index.map(self._human_readable_date)
         df.fillna("-", inplace=True)

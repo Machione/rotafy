@@ -1,23 +1,35 @@
+lookahead_days = 25
+default_number_of_training_sessions = 1
+default_number_of_shadowing_sessions = 1
+message = "Hi {recipient}! This is an automated reminder than on {date} {chore} will be handled by {assignement}. If this no longer suits, please send a message into our WhatsApp group chat. Thanks!"
+
 [[chore]]
 name = "Dishes"
 recurrence = "Daily"
-notify = true
+notify = false
 
 [[chore]]
 name = "Hoovering"
 recurrence = "Saturdays"
-notify = "Fridays"
+notify = 1
 exceptions = [2024-06-01, 2024-06-03]
+required_shadowing_sessions = 2
 
 
 [[person]]
 name = "Ryan"
-telephone = "+447925057529"
+telephone = "+61411111111"
 skills = ["ALL"]
 
 [[person]]
 name = "Mark"
-telephone = "+447925057529"
+telephone = "+61422222222"
 skills = ["Dishes"]
-unavailable = 2024-06-01
+unavailable = [2024-06-01]
 training = ["Hoovering"]
+
+[[person]]
+name = "Matthew"
+telephone = "+61433333333"
+skills = ["Hoovering"]
+training = ["Dishes"]

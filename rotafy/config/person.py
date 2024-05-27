@@ -1,6 +1,6 @@
 import datetime
 from typing import Iterable
-import chore
+from rotafy.config import chore
 
 
 class Person:
@@ -19,7 +19,7 @@ class Person:
         
         self._raw_training = training
         self.experience = {
-            c: 0 for c in training if c not in self.skills
+            c: 0 for c in self._raw_training if c not in self.skills
         }
     
     def __repr__(self):

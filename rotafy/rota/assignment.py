@@ -1,5 +1,5 @@
 import datetime
-from ..config import chore, person
+from rotafy.config import chore, person
 
 class Assignment:
     def __init__(
@@ -32,6 +32,8 @@ class Assignment:
         
         if self.trainee.is_being_observed(self.chore):
             return f"{self.trainee.name} supervised by {self.person.name}"
+        
+        return f"Other - {self.person.name} with {self.trainee.name}"
     
     def __eq__(self, other) -> bool:
         return (

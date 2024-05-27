@@ -27,7 +27,7 @@ class Chore:
     def __repr__(self) -> str:
         s = (
             f"Chore({self.name}, {self.ordinal}, {self._raw_recurrence}, "
-            f"{self._raw_notify}, {self.num_training_sessions}, "
+            f"{self.notify}, {self.num_training_sessions}, "
             f"{self.num_shadowing_sessions}, {self.exceptions})"
         )
         return s

@@ -2,7 +2,7 @@ import datetime
 import pkg_resources
 import os
 import pickle
-import row
+from rotafy.rota import row
 
 class Rota:
     def __init__(self, name: str) -> None:

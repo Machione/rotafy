@@ -1,5 +1,5 @@
 from typing import Iterable
-import assignment
+from rotafy.rota import assignment
 
 class Row:
     def __init__(self, assignments: Iterable[assignment.Assignment]) -> None:
@@ -12,12 +12,6 @@ class Row:
             for assignment in self.assignments
             if assignment.chore.name == chore_name
         ]
-        if len(found) == 0:
-            found = [
-                assignment
-                for assignment in self.assignments
-                if assignment.chore.name.lower() == chore_name.lower()
-            ]
         
         if len(found) == 0:
             return None

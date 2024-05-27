@@ -2,14 +2,15 @@ import datetime
 import itertools
 from typing import Iterable
 import random
-from .config import config, chore, rota
+from rotafy.config import config, chore
+from rotafy.rota import printable, assignment, row
 
 
 class Manager:
     def __init__(self, name: str, toml_file_path: str) -> None:
         self.name = name
         self.configuration = config.Config(toml_file_path)
-        self.rota = rota.Rota(self.name)
+        self.rota = printable.PrintableRota(self.name)
         self.fill_up_lookahead_period()
         self.rota.save()
     
@@ -27,21 +28,21 @@ class Manager:
     
     def try_to_generate_row(
             self, 
-            assignments: Iterable[rota.Assignment]
-        ) -> rota.Row | None:
+            assignments: Iterable[assignment.Assignment]
+        ) -> row.Row | None:
         try:
-            return rota.Row(assignments)
+            return row.Row(assignments)
         except Exception:
             return None
         
     def get_all_valid_assignments(
             self, 
             date: datetime.date
-        ) -> Iterable[rota.Assignment]:
+        ) -> Iterable[assignment.Assignment]:
         # TODO: This could probably be improved in efficiency.
         chores_to_assign = self.chores_on(date)
         all_possible_assignments_with_trainees = [
-            rota.Assignment(date, chore, person, trainee)
+            assignment.Assignment(date, chore, person, trainee)
             for person in self.configuration.people
             for trainee in self.configuration.people
             for chore in chores_to_assign
@@ -51,7 +52,7 @@ class Manager:
             )
         ]
         all_possible_assignments_without_trainees = [
-            rota.Assignment(date, chore, person)
+            assignment.Assignment(date, chore, person)
             for person in self.configuration.people
             for chore in chores_to_assign
             if person.can_do(chore, date)
@@ -79,6 +80,10 @@ class Manager:
         choices = self.get_all_valid_assignments(date)
         # TODO: Don't just randomly assign, but use weights
         row = random.choice(choices)
+        for assignment in row.assignments:
+            if assignment.trainee is not None:
+                assignment.trainee.add_to_experience(assignment.chore)
+        
         self.rota.add_row(row)
     
     def fill_up_lookahead_period(self) -> None:
