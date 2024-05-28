@@ -1,7 +1,7 @@
 lookahead_days = 25
 default_number_of_training_sessions = 1
 default_number_of_shadowing_sessions = 1
-message = "Hi {recipient}! This is an automated reminder than on {date} {chore} will be handled by {assignement}. If this no longer suits, please send a message into our WhatsApp group chat. Thanks!"
+message = "Hi {{recipient}}! This is an automated reminder than on {{date}} {{chore}} will be handled by {{assignment}}. If this no longer suits, please send a message into our WhatsApp group chat. Thanks!"
 
 [[chore]]
 name = "Dishes"
