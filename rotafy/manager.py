@@ -172,7 +172,8 @@ class Manager:
                                 
                                 try:
                                     retry_call(
-                                        self.notifier.send(),
+                                        notifier_send,
+                                        fargs=[self.notifier],
                                         exceptions=ApiException,
                                         tries=3,
                                         delay=5,
@@ -180,6 +181,10 @@ class Manager:
                                     )
                                     assignment.mark_notified()
                                 except Exception as e:
-                                    raise Warning(e)
+                                    raise e
         
         self.rota.save()
+
+
+def notifier_send(notifier: notifier.Notifier) -> None:
+    notifier.send()
