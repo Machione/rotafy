@@ -80,11 +80,11 @@ class Manager:
         choices = self.get_all_valid_assignments(date)
         # TODO: Don't just randomly assign, but use weights
         row = random.choice(choices)
+        self.rota.add_row(row)
+        
         for assignment in row.assignments:
             if assignment.trainee is not None:
                 assignment.trainee.add_to_experience(assignment.chore)
-        
-        self.rota.add_row(row)
     
     def fill_up_lookahead_period(self) -> None:
         current_date = datetime.datetime.today().date()

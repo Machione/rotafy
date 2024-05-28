@@ -2,6 +2,7 @@ import datetime
 import pkg_resources
 import os
 import pickle
+import copy
 from rotafy.rota import row
 
 class Rota:
@@ -36,7 +37,7 @@ class Rota:
             self.delete_row(new_row.date)
             raise Warning(f"Overwrote assignments on {new_row.date}.")
         
-        self.rows.append(new_row)
+        self.rows.append(copy.deepcopy(new_row))
         self.sort()
     
     def delete_row(self, date: datetime.date) -> None:
