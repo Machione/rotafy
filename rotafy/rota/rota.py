@@ -3,6 +3,7 @@ import pkg_resources
 import os
 import pickle
 import copy
+from typing import Iterable
 from rotafy.rota import row
 
 class Rota:
@@ -42,6 +43,20 @@ class Rota:
     
     def delete_row(self, date: datetime.date) -> None:
         self.rows = [row for row in self.rows if row.date != date]
+    
+    def rows_prior(
+            self, 
+            date: datetime.date, 
+            inc: bool = False
+        ) -> Iterable[row.Row]:
+        self.sort()
+        
+        if inc:
+            prior = [row for row in self.rows if row.date <= date]
+        else:
+            prior = [row for row in self.rows if row.date < date]
+        
+        return prior
     
     @property
     def latest_date(self):
