@@ -3,8 +3,11 @@ import itertools
 from typing import Iterable
 import random
 import math
+from retry.api import retry_call
+from clicksend_client.rest import ApiException
 from rotafy.config import config, chore
 from rotafy.rota import printable, assignment, row
+from rotafy import notifier
 
 
 class Manager:
@@ -12,8 +15,10 @@ class Manager:
         self.name = name
         self.configuration = config.Config(toml_file_path)
         self.rota = printable.PrintableRota(self.name)
-        self.fill_up_lookahead_period()
-        self.rota.save()
+        self.notifier = notifier.Notifier(
+            self.configuration.clicksend_username,
+            self.configuration.clicksend_api_key
+        )
     
     
     def next_chore_date(self) -> datetime.date:
@@ -129,10 +134,52 @@ class Manager:
             if assignment.trainee is not None:
                 assignment.trainee.add_to_experience(assignment.chore)
     
-    def fill_up_lookahead_period(self) -> None:
+    def fill(self) -> None:
         current_date = datetime.datetime.today().date()
         while (
             (self.rota.latest_date - current_date).days <= 
             self.configuration.lookahead_days
         ):
             self.assign(self.next_chore_date())
+        
+        self.rota.save()
+    
+    def notify(self) -> None:
+        today = datetime.datetime.today().date()
+        
+        for chore in self.configuration.chores:
+            if isinstance(chore.notify, int):
+                delta = datetime.timedelta(days=chore.notify)
+                for row in self.rota.rows:
+                    if row.date - delta == today:
+                        for assignment in row.assignments:
+                            if assignment.notification_sent == False:
+                                self.notifier.add_to_queue(
+                                    self.configuration.message_template,
+                                    assignment.person,
+                                    row.date,
+                                    assignment.chore,
+                                    str(assignment)
+                                )
+                                if assignment.trainee is not None:
+                                    self.notifier.add_to_queue(
+                                        self.configuration.message_template,
+                                        assignment.trainee,
+                                        row.date,
+                                        assignment.chore,
+                                        str(assignment)
+                                    )
+                                
+                                try:
+                                    retry_call(
+                                        self.notifier.send(),
+                                        exceptions=ApiException,
+                                        tries=3,
+                                        delay=5,
+                                        backoff=5
+                                    )
+                                    assignment.mark_notified()
+                                except Exception as e:
+                                    raise Warning(e)
+        
+        self.rota.save()

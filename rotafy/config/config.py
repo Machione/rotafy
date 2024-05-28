@@ -11,6 +11,11 @@ class Config:
         self.lookahead_days = self.raw.get("lookahead_days", 14)
         self.clicksend_username = self.raw.get("clicksend_username")
         self.clicksend_api_key = self.raw.get("clicksend_api_key")
+        self.message_template = self.raw.get(
+            "message", 
+            "Hi {{recipient}}! On {{date}}, {{chore}} is due to be handled by "
+            "{{assignment}}. Thanks!"
+        )
         
         self.chores = set()
         for ordinal, raw_chore in enumerate(self.raw.get("chore", [])):

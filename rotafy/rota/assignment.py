@@ -33,7 +33,7 @@ class Assignment:
         if self.trainee.is_being_observed(self.chore):
             return f"{self.trainee.name} supervised by {self.person.name}"
         
-        return f"Other - {self.person.name} with {self.trainee.name}"
+        return f"{self.person.name} with {self.trainee.name}"
     
     def __eq__(self, other) -> bool:
         return (
@@ -53,3 +53,6 @@ class Assignment:
                 self.trainee if self.trainee is not None else None
             )
         )
+    
+    def mark_notified(self) -> None:
+        self.notification_sent = True

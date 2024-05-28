@@ -9,10 +9,10 @@ class Notifier:
         clicksend_config = clicksend_client.Configuration()
         clicksend_config.username = clicksend_username
         clicksend_config.password = clicksend_api_key
-        clicksend_client = clicksend_client.ApiClient(clicksend_config)
-        self.clicksend_api = clicksend_client.SMSApi(clicksend_client)
+        configured_client = clicksend_client.ApiClient(clicksend_config)
+        self.clicksend_api = clicksend_client.SMSApi(configured_client)
         
-        self.sms_queue = []
+        self.queue = []
     
     def _ordinal(self, n: int) -> str:
         return f"{n:d}{'tsnrhtdd'[(n//10%10!=1)*(n%10<4)*n%10::4]}"
@@ -23,11 +23,12 @@ class Notifier:
         today = datetime.datetime.today().date()
         days_to_date = (date - today).days
         if days_to_date < 7:
-            return f"{date.strftime("%A")} ({date_ordinal})"
+            day_of_week = date.strftime("%A")
+            return f"{day_of_week} ({date_ordinal})"
         
         return date.strftime(f"%a {date_ordinal} %b")
     
-    def queue_message(
+    def add_to_queue(
             self, 
             message_template: str,
             recipient: person.Person,
@@ -36,8 +37,7 @@ class Notifier:
             assignment: str
         ) -> None:
         
-        if recipient.name == assignment:
-            assignment = "you"
+        assignment = assignment.replace(recipient.name, "you")
         
         jinja_env = Environment(loader=BaseLoader())
         template = jinja_env.from_string(message_template)
@@ -55,10 +55,10 @@ class Notifier:
             body=message,
             to=recipient.telephone
         )
-        self.sms_queue.append(sms)
+        self.queue.append(sms)
     
-    def send_all(self) -> None:
-        sms_messages = clicksend_client.SmsMessageCollection(
-            messages=self.sms_queue
+    def send(self) -> None:
+        messages_to_send = clicksend_client.SmsMessageCollection(
+            messages=[self.queue]
         )
-        # r = self.clicksend_api.sms_send_post(sms_messages)
+        self.clicksend_api.sms_send_post(messages_to_send)
