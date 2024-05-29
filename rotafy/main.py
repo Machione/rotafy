@@ -1,4 +1,4 @@
-from rotafy import manager
+from rotafy.api import manager
 m = manager.Manager("test", "examples/basic.toml")
 m.fill()
 m.notify()

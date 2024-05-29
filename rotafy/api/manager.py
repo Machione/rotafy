@@ -7,7 +7,7 @@ from retry.api import retry_call
 from clicksend_client.rest import ApiException
 from rotafy.config import config, chore, person
 from rotafy.rota import printable, assignment, row
-from rotafy import notifier
+from rotafy.api import notifier
 
 
 class Manager:
