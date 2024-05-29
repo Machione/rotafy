@@ -8,6 +8,8 @@ class Config:
         self.path = toml_file_path
         self.raw = toml.load(self.path)
         
+        self.name = self.raw["name"]
+        
         self.lookahead_days = self.raw.get("lookahead_days", 14)
         self.clicksend_username = self.raw.get("clicksend_username")
         self.clicksend_api_key = self.raw.get("clicksend_api_key")

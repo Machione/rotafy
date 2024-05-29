@@ -1,5 +1,5 @@
 from rotafy.api import manager
-m = manager.Manager("test", "examples/basic.toml")
+m = manager.Manager("examples/basic.toml")
 m.fill()
 m.notify()
 m.rota.print()

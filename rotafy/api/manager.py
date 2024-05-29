@@ -11,15 +11,21 @@ from rotafy.api import notifier
 
 
 class Manager:
-    def __init__(self, name: str, toml_file_path: str) -> None:
-        self.name = name
+    def __init__(self, toml_file_path: str) -> None:
         self.configuration = config.Config(toml_file_path)
+        self.name = self.configuration.name
         self.rota = printable.PrintableRota(self.name)
         self.notifier = notifier.Notifier(
             self.configuration.clicksend_username,
             self.configuration.clicksend_api_key
         )
     
+    
+    def print(self) -> None:
+        self.rota.print()
+    
+    def to_pdf(self, output_file: str) -> None:
+        self.rota.pdf(output_file)
     
     def next_chore_date(self) -> datetime.date:
         next_dates_per_chore = [
@@ -54,7 +60,7 @@ class Manager:
             new_row = row.Row([new_assignment])
         else:
             new_row = existing_row
-            new_row[chore] = new_assignment
+            new_row[chore_to_do] = new_assignment
         
         self.rota[date] = new_row
         self.rota.save()

@@ -38,7 +38,6 @@ class PrintableRota(rota.Rota):
         width = len(df_separate.columns)
         height = df_separate.shape[0]
         if height == 0:
-            raise Warning("There is no data to draw.")
             return None
         
         heading_colour = (0.083, 0.203, 0.273) # primary blue
@@ -99,7 +98,7 @@ class PrintableRota(rota.Rota):
         data = {}
         for row in self.rows:
             row_data = []
-            for chore in ordered_chore_names:
+            for chore in ordered_chores:
                 assigned = row[chore]
                 if assigned is None:
                     row_data.append(None)
