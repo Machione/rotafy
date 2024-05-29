@@ -1,4 +1,5 @@
 from typing import Iterable
+from rotafy.config import chore
 from rotafy.rota import assignment
 
 class Row:
@@ -6,23 +7,29 @@ class Row:
         self.assignments = assignments
         self.date = list(self.assignments)[0].date
     
-    def __getitem__(self, chore_name: str) -> assignment.Assignment | None:
-        found = [
-            assignment
-            for assignment in self.assignments
-            if assignment.chore.name == chore_name
-        ]
-        
-        if len(found) == 0:
+    def __getitem__(self, chore: chore.Chore) -> assignment.Assignment | None:
+        matches = [a for a in self.assignments if a.chore == chore]
+        if len(matches) != 1:
             return None
         
-        if len(found) > 1:
-            raise Warning(
-                "Ambiguous chore name given resulting in multiple matches."
-            )
-        
-        return found[0]
+        return matches[0]
     
+    def __setitem__(
+            self, 
+            chore: chore.Chore, 
+            new_assignment: assignment.Assignment
+        ) -> None:
+        kept_assignments = [a for a in self.assignments if a.chore != chore]
+        override = kept_assignments + [new_assignment]
+        self.assignments = override
+    
+    def __delitem__(
+            self,
+            chore: chore.Chore
+        ) -> None:
+        kept_assignments = [a for a in self.assignments if a.chore != chore]
+        self.assignments = kept_assignments
+            
     
     @property
     def assignments(self) -> Iterable[assignment.Assignment]:

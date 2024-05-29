@@ -6,6 +6,7 @@ import copy
 from typing import Iterable
 from rotafy.rota import row
 
+
 class Rota:
     def __init__(self, name: str) -> None:
         self.name = name
@@ -16,6 +17,25 @@ class Rota:
         self.rows = []
         self.load()
         self.sort()
+    
+    def __getitem__(self, date: datetime.date) -> row.Row | None:
+        matches = [r for r in self.rows if r.date == date]
+        if len(matches) != 1:
+            return None
+        
+        return matches[0]
+    
+    def __setitem__(self, date: datetime.date, new_row: row.Row) -> None:
+        if date != new_row.date:
+            raise IndexError(
+                "Date of new row and date to add to rota must match."
+            )
+        
+        return self.add_row(new_row)
+    
+    def __delitem__(self, date: datetime.date) -> None:
+        return self.delete_row(date)
+    
     
     def load(self) -> None:
         if os.path.exists(self.file_path):

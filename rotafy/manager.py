@@ -5,7 +5,7 @@ import random
 import math
 from retry.api import retry_call
 from clicksend_client.rest import ApiException
-from rotafy.config import config, chore
+from rotafy.config import config, chore, person
 from rotafy.rota import printable, assignment, row
 from rotafy import notifier
 
@@ -32,6 +32,55 @@ class Manager:
         return set(c for c in self.configuration.chores if c.on(date))
     
     
+    def add(
+            self, 
+            date: datetime.date, 
+            chore_name: str, 
+            person_name: str
+        ) -> None:
+        chore_to_do = chore.find_chore(chore_name, self.configuration.chores)
+        person_to_assign = person.find_person(
+            person_name, 
+            self.configuration.people
+        )
+        new_assignment = assignment.Assignment(
+            date, 
+            chore_to_do, 
+            person_to_assign
+        )
+        
+        existing_row = self.rota[date]
+        if existing_row is None:
+            new_row = row.Row([new_assignment])
+        else:
+            new_row = existing_row
+            new_row[chore] = new_assignment
+        
+        self.rota[date] = new_row
+        self.rota.save()
+    
+    def replace(
+            self, 
+            date: datetime.date, 
+            person_name: str, 
+            replacement_name: str
+        ) -> None:
+        existing_row = self.rota[date]
+        if existing_row is None:
+            raise IndexError(f"No existing rota row on {date} to replace.")
+        
+        existing_assignment = [
+            a for a in existing_row.assignments if a.person.name == person_name
+        ]
+        if len(existing_assignment) != 1:
+            raise IndexError(
+                f"{person_name} is not assigned to a chore on {date}. Use "
+                ".add() to add them instead."
+            )
+        
+        chore_name = existing_assignment[0].chore.name
+        self.add(date, chore_name, replacement_name)
+        
     def try_to_generate_row(
             self, 
             assignments: Iterable[assignment.Assignment]

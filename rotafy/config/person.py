@@ -84,3 +84,17 @@ class Person:
     
     def can_be_trained(self, chore: chore.Chore, date: datetime.date) -> bool:
         return self.is_learning(chore) and self.available(date)
+
+
+def find_person(person_name: str, people: Iterable[Person]) -> Person:
+    for person in people:
+        if person.name == person_name:
+            return person
+    
+    for person in people:
+        if person.name.lower() == person_name.lower():
+            return person
+    
+    raise Exception(
+        f"Cannot find person named {person_name} among the list of people."
+    )
