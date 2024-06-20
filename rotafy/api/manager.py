@@ -152,6 +152,9 @@ class Manager:
         for assignment in row.assignments:
             n = 0
             for comparison_row in previous_rota:
+                if n >= 10:
+                    break
+                
                 same_chore = [
                     a for a in comparison_row.assignments
                     if a.chore == assignment.chore
@@ -182,7 +185,10 @@ class Manager:
         weights = [
             self.get_row_weight(date, row) for row in choices
         ]
-        row = random.choices(choices, weights=weights, k=1)[0]
+        max_weight = max(weights)
+        index_with_max = [i for i, w in enumerate(weights) if w == max_weight]
+        best_choices = [choices[i] for i in index_with_max]
+        row = random.choice(best_choices)
         self.rota.add_row(row)
         
         for assignment in row.assignments:
@@ -203,7 +209,7 @@ class Manager:
         today = datetime.datetime.today().date()
         
         for chore in self.configuration.chores:
-            if isinstance(chore.notify, int):
+            if not(isinstance(chore.notify, bool)) and chore.notify == False:
                 delta = datetime.timedelta(days=chore.notify)
                 for row in self.rota.rows:
                     if row.date - delta == today:
