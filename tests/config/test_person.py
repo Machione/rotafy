@@ -33,7 +33,7 @@ def test_init(test_person):
     assert len(test_person.skills) == 2
     assert all(isinstance(c, Chore) for c in test_person.skills)
     assert test_person.telephone == "1234"
-    assert test_person.unavailable[0] == datetime.date.today()
+    assert list(test_person.unavailable)[0] == datetime.date.today()
     assert len(test_person.experience) == 1
     assert all(isinstance(c, Chore) for c in test_person.experience.keys())
     assert all(x == 0 for x in test_person.experience.values())
@@ -79,3 +79,37 @@ def test_is_learning(test_person):
         assert test_person.is_learning(chore) == False
 
     assert test_person.is_learning(all_chores[-1]) == True
+
+
+def test_add_to_experience(test_person):
+    # The chores require 1 shadowing session and 2 training sessions.
+    training_chore = all_chores[-1]
+
+    assert test_person.experience[training_chore] == 0
+    assert training_chore not in test_person.skills
+
+    test_person.add_to_experience(training_chore)
+    assert test_person.experience[training_chore] == 1
+    assert training_chore not in test_person.skills
+
+    test_person.add_to_experience(training_chore)
+    assert test_person.experience[training_chore] == 2
+    assert training_chore not in test_person.skills
+
+    # Complete training
+    test_person.add_to_experience(training_chore)
+    assert training_chore not in test_person.experience.keys()
+    assert training_chore in test_person.skills
+
+    # Overdo training should have no effect
+    test_person.add_to_experience(training_chore)
+    assert training_chore not in test_person.experience.keys()
+    assert training_chore in test_person.skills
+
+    new_chore = Chore("unseen", 1, "every day", True, 2, 1, [datetime.date.today()])
+    assert new_chore not in test_person.experience.keys()
+    assert new_chore not in test_person.skills
+
+    test_person.add_to_experience(new_chore)
+    assert test_person.experience[new_chore] == 1
+    assert new_chore not in test_person.skills

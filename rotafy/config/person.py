@@ -14,10 +14,10 @@ class Person:
     ) -> None:
         self.name = name
         self.telephone = telephone
-        self.skills = skills
-        self.unavailable = unavailable
+        self.skills = set(skills)
+        self.unavailable = set(unavailable)
 
-        self._raw_training = training
+        self._raw_training = set(training)
         self.experience = {c: 0 for c in self._raw_training if c not in self.skills}
 
     def __repr__(self) -> str:
@@ -48,6 +48,9 @@ class Person:
         return chore in self.experience.keys()
 
     def add_to_experience(self, chore: chore.Chore) -> None:
+        if chore in self.skills:
+            return
+
         if chore in self.experience.keys():
             self.experience[chore] += 1
         else:
