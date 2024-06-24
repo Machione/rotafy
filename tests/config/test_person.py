@@ -126,9 +126,27 @@ def test_is_shadowing(test_person, new_chore):
     training_chore = all_chores[-1]
 
     assert test_person.is_shadowing(training_chore) == True
-    test_person.add_to_experience(training_chore)
+    test_person.add_to_experience(training_chore)  # 1
     assert test_person.is_shadowing(training_chore) == True
-    test_person.add_to_experience(training_chore)
+    test_person.add_to_experience(training_chore)  # 2
     assert test_person.is_shadowing(training_chore) == False
+    test_person.add_to_experience(training_chore)  # 3 - complete
+    assert test_person.is_shadowing(training_chore) == False
+
+    assert test_person.is_shadowing(new_chore) == False
+
+
+def test_is_being_observed(test_person, new_chore):
+    # The chores require 2 sessions shadowing someone else then 1 session being
+    # observed by someone else
+    training_chore = all_chores[-1]
+
+    assert test_person.is_being_observed(training_chore) == False
+    test_person.add_to_experience(training_chore)  # 1
+    assert test_person.is_being_observed(training_chore) == False
+    test_person.add_to_experience(training_chore)  # 2
+    assert test_person.is_being_observed(training_chore) == True
+    test_person.add_to_experience(training_chore)  # 3 - complete
+    assert test_person.is_being_observed(training_chore) == False
 
     assert test_person.is_shadowing(new_chore) == False
