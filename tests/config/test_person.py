@@ -4,12 +4,18 @@ from rotafy.config.chore import Chore
 from rotafy.config import person
 
 
+all_chores = [
+    Chore("c1", 1, "every day", True, 2, 1, [datetime.date.today()]),
+    Chore("c2", 1, "every day", True, 2, 1, [datetime.date.today()]),
+    Chore("c3", 1, "every day", True, 2, 1, [datetime.date.today()]),
+]
+
+
 def basic_person_generator(name):
-    c1 = Chore("c1", 1, "every day", True, 2, 1, [datetime.date.today()])
-    c2 = Chore("c2", 1, "every day", True, 2, 1, [datetime.date.today()])
-    c3 = Chore("c3", 1, "every day", True, 2, 1, [datetime.date.today()])
-    chores = [c1, c2]
-    return person.Person(name, chores, "1234", [datetime.date.today()], [c3])
+    p = person.Person(
+        name, all_chores[:-1], "1234", [datetime.date.today()], [all_chores[-1]]
+    )
+    return p
 
 
 @pytest.fixture
@@ -54,3 +60,15 @@ def test_str(test_person):
 def test_eq(test_person, other_person):
     assert test_person == test_person
     assert test_person != other_person
+
+
+def test_hash(test_person, other_person):
+    assert hash(test_person) == hash(test_person)
+    assert hash(test_person) != hash(other_person)
+
+
+def test_qualified(test_person):
+    for chore in all_chores[:-1]:
+        assert test_person.qualified(chore) == True
+
+    assert test_person.qualified(all_chores[-1]) == False
