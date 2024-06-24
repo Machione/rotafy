@@ -33,7 +33,7 @@ class Person:
         return s
 
     def __str__(self) -> str:
-        return self.__repr__()
+        return self.name
 
     def __eq__(self, other) -> bool:
         return other and self.name == other.name
@@ -86,6 +86,20 @@ class Person:
 
     def can_be_trained(self, chore: chore.Chore, date: datetime.date) -> bool:
         return self.is_learning(chore) and self.available(date)
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        if len(value.strip()) == 0:
+            raise ValueError(
+                "You must provide a non-empty person name in the TOML "
+                "configuration file."
+            )
+
+        self._name = value.strip()
 
 
 def find_person(person_name: str, people: Iterable[Person]) -> Person:

@@ -17,6 +17,11 @@ def test_person():
     return basic_person_generator("test_person")
 
 
+@pytest.fixture
+def other_person():
+    return basic_person_generator("other_person")
+
+
 def test_init(test_person):
     assert test_person.name == "test_person"
     assert len(test_person.skills) == 2
@@ -28,5 +33,24 @@ def test_init(test_person):
     assert all(x == 0 for x in test_person.experience.values())
 
 
+def test_name():
+    with pytest.raises(ValueError):
+        basic_person_generator("")
+        basic_person_generator(None)
+        basic_person_generator("    ")
+
+    malformed = basic_person_generator("  malformed  ")
+    assert malformed.name == "malformed"
+
+
 def test_repr(test_person):
     assert eval("person." + repr(test_person)) == test_person
+
+
+def test_str(test_person):
+    assert str(test_person) == test_person.name
+
+
+def test_eq(test_person, other_person):
+    assert test_person == test_person
+    assert test_person != other_person
