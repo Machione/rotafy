@@ -150,3 +150,13 @@ def test_is_being_observed(test_person, new_chore):
     assert test_person.is_being_observed(training_chore) == False
 
     assert test_person.is_shadowing(new_chore) == False
+
+
+def test_available(test_person):
+    today = datetime.date.today()
+    yesterday = today - datetime.timedelta(days=1)
+    tomorrow = today - datetime.timedelta(days=1)
+
+    assert test_person.available(today) == False
+    assert test_person.available(yesterday) == True
+    assert test_person.available(tomorrow) == True
