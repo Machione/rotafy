@@ -106,6 +106,7 @@ def test_add_to_experience(test_person):
     assert training_chore not in test_person.experience.keys()
     assert training_chore in test_person.skills
 
+    # Adding a brand new chore should be allowed
     new_chore = Chore("unseen", 1, "every day", True, 2, 1, [datetime.date.today()])
     assert new_chore not in test_person.experience.keys()
     assert new_chore not in test_person.skills
