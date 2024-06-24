@@ -72,3 +72,10 @@ def test_qualified(test_person):
         assert test_person.qualified(chore) == True
 
     assert test_person.qualified(all_chores[-1]) == False
+
+
+def test_is_learning(test_person):
+    for chore in all_chores[:-1]:
+        assert test_person.is_learning(chore) == False
+
+    assert test_person.is_learning(all_chores[-1]) == True
