@@ -182,3 +182,15 @@ def test_can_be_trained(test_person):
 
     assert test_person.can_be_trained(all_chores[-1], today) == False
     assert test_person.can_be_trained(all_chores[-1], tomorrow) == True
+
+
+def test_find_person(test_person, other_person):
+    person_list = [test_person, other_person]
+
+    assert person.find_person("test_person", person_list) == test_person
+    assert person.find_person("other_person", person_list) == other_person
+    assert person.find_person("TEST_PERSON", person_list) == test_person
+    assert person.find_person("TeSt_PeRsOn", person_list) == test_person
+
+    with pytest.raises(person.PersonNotFound):
+        person.find_person("something_else", person_list)

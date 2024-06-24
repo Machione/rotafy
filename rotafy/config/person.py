@@ -105,6 +105,10 @@ class Person:
         self._name = value.strip()
 
 
+class PersonNotFound(Exception):
+    pass
+
+
 def find_person(person_name: str, people: Iterable[Person]) -> Person:
     for person in people:
         if person.name == person_name:
@@ -114,4 +118,6 @@ def find_person(person_name: str, people: Iterable[Person]) -> Person:
         if person.name.lower() == person_name.lower():
             return person
 
-    raise Exception(f"Cannot find person named {person_name} among the list of people.")
+    raise PersonNotFound(
+        f"Cannot find person named {person_name} among the list of people."
+    )
