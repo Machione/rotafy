@@ -155,7 +155,7 @@ def test_is_being_observed(test_person, new_chore):
 def test_available(test_person):
     today = datetime.date.today()
     yesterday = today - datetime.timedelta(days=1)
-    tomorrow = today - datetime.timedelta(days=1)
+    tomorrow = today + datetime.timedelta(days=1)
 
     assert test_person.available(today) == False
     assert test_person.available(yesterday) == True
@@ -164,10 +164,21 @@ def test_available(test_person):
 
 def test_can_do(test_person):
     today = datetime.date.today()
-    tomorrow = today - datetime.timedelta(days=1)
+    tomorrow = today + datetime.timedelta(days=1)
 
     assert test_person.can_do(all_chores[0], today) == False
     assert test_person.can_do(all_chores[0], tomorrow) == True
 
     assert test_person.can_do(all_chores[-1], today) == False
     assert test_person.can_do(all_chores[-1], tomorrow) == False
+
+
+def test_can_be_trained(test_person):
+    today = datetime.date.today()
+    tomorrow = today + datetime.timedelta(days=1)
+
+    assert test_person.can_be_trained(all_chores[0], today) == False
+    assert test_person.can_be_trained(all_chores[0], tomorrow) == False
+
+    assert test_person.can_be_trained(all_chores[-1], today) == False
+    assert test_person.can_be_trained(all_chores[-1], tomorrow) == True
