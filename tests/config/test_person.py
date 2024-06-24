@@ -160,3 +160,14 @@ def test_available(test_person):
     assert test_person.available(today) == False
     assert test_person.available(yesterday) == True
     assert test_person.available(tomorrow) == True
+
+
+def test_can_do(test_person):
+    today = datetime.date.today()
+    tomorrow = today - datetime.timedelta(days=1)
+
+    assert test_person.can_do(all_chores[0], today) == False
+    assert test_person.can_do(all_chores[0], tomorrow) == True
+
+    assert test_person.can_do(all_chores[-1], today) == False
+    assert test_person.can_do(all_chores[-1], tomorrow) == False
