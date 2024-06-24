@@ -7,7 +7,7 @@ class Person:
     def __init__(
         self,
         name: str,
-        skills: set[chore.Chore],
+        skills: Iterable[chore.Chore],
         telephone: str = "",
         unavailable: Iterable[datetime.date] = [],
         training: Iterable[chore.Chore] = [],
@@ -20,11 +20,16 @@ class Person:
         self._raw_training = training
         self.experience = {c: 0 for c in self._raw_training if c not in self.skills}
 
-    def __repr__(self):
-        s = (
-            f"Person({self.name}, {self.telephone}, {self.skills}, "
-            f"{self.unavailable}, {self._raw_training})"
-        )
+    def __repr__(self) -> str:
+        init_args = [
+            self.name,
+            self.skills,
+            self.telephone,
+            self.unavailable,
+            self._raw_training,
+        ]
+        reprs = [repr(arg) for arg in init_args]
+        s = f"Person({', '.join(reprs)})"
         return s
 
     def __str__(self) -> str:
