@@ -11,8 +11,8 @@ class Config:
         self.name = self.raw["name"]
 
         self.lookahead_days = self.raw.get("lookahead_days", 14)
-        self.clicksend_username = self.raw.get("clicksend_username")
-        self.clicksend_api_key = self.raw.get("clicksend_api_key")
+        self.clicksend_username = self.raw.get("clicksend_username", "")
+        self.clicksend_api_key = self.raw.get("clicksend_api_key", "")
         self.message_template = self.raw.get(
             "message",
             "Hi {{recipient}}! On {{date}}, {{chore}} is due to be handled by "
@@ -20,26 +20,26 @@ class Config:
         )
 
         self.chores = set()
-        for ordinal, raw_chore in enumerate(self.raw.get("chore", [])):
+        for ordinal, raw_chore in enumerate(self.raw.get("chore")):
             this_chore = chore.Chore(
                 raw_chore.get("name"),
                 ordinal,
                 raw_chore.get("recurrence"),
-                raw_chore.get("notify"),
+                raw_chore.get("notify", False),
                 raw_chore.get(
                     "required_training_sessions",
-                    self.raw.get("default_number_of_training_sessions"),
+                    self.raw.get("default_number_of_training_sessions", 1),
                 ),
                 raw_chore.get(
                     "required_shadowing_sessions",
-                    self.raw.get("default_number_of_shadowing_sessions"),
+                    self.raw.get("default_number_of_shadowing_sessions", 1),
                 ),
                 raw_chore.get("exceptions", []),
             )
             self.chores.add(this_chore)
 
         self.people = set()
-        for raw_person in self.raw.get("person", []):
+        for raw_person in self.raw.get("person"):
             this_person_skills = self._get_chores_from_names(
                 raw_person.get("skills", [])
             )
@@ -50,30 +50,34 @@ class Config:
             this_person = person.Person(
                 raw_person.get("name"),
                 this_person_skills,
-                str(raw_person.get("telephone")),
+                str(raw_person.get("telephone", "")),
                 raw_person.get("unavailable", []),
                 this_person_training,
             )
             self.people.add(this_person)
 
     def __repr__(self):
-        return f"Config({self.path})"
+        return f"Config({repr(self.path)})"
 
     def __str__(self):
-        s = "Chores:\n"
+        s = self.name + "\n"
+        s += "  Chores:\n"
         for c in self.chores:
-            s += "  - " + str(c) + "\n"
+            s += "    - " + str(c) + "\n"
 
-        s += "\nPeople:\n"
+        s += "  People:\n"
         for p in self.people:
-            s += "  - " + str(p) + "\n"
+            s += "    - " + str(p) + "\n"
 
-        return s
+        return s.strip()
+
+    def __eq__(self, other) -> bool:
+        return other and self.name == other.name
 
     def _get_chores_from_names(self, names: Iterable[str]) -> Iterable[chore.Chore]:
         if len(names) == 1:
             singleton_name = names[0].lower()
-            if singleton_name in ["any", "all"]:
+            if singleton_name in ("any", "all"):
                 return self.chores
 
         found_chores = set()
