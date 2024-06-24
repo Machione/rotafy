@@ -1,4 +1,5 @@
 from rotafy.api import manager
+
 m = manager.Manager("examples/basic.toml")
 m.fill()
 m.notify()
