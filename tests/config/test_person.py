@@ -28,6 +28,11 @@ def other_person():
     return basic_person_generator("other_person")
 
 
+@pytest.fixture
+def new_chore():
+    return Chore("unseen", 1, "every day", True, 2, 1, [datetime.date.today()])
+
+
 def test_init(test_person):
     assert test_person.name == "test_person"
     assert len(test_person.skills) == 2
@@ -81,8 +86,9 @@ def test_is_learning(test_person):
     assert test_person.is_learning(all_chores[-1]) == True
 
 
-def test_add_to_experience(test_person):
-    # The chores require 1 shadowing session and 2 training sessions.
+def test_add_to_experience(test_person, new_chore):
+    # The chores require 2 training sessions (shadowing someone else) and 1
+    # shadowing session (shadowed by someone else)
     training_chore = all_chores[-1]
 
     assert test_person.experience[training_chore] == 0
@@ -107,10 +113,22 @@ def test_add_to_experience(test_person):
     assert training_chore in test_person.skills
 
     # Adding a brand new chore should be allowed
-    new_chore = Chore("unseen", 1, "every day", True, 2, 1, [datetime.date.today()])
     assert new_chore not in test_person.experience.keys()
     assert new_chore not in test_person.skills
 
     test_person.add_to_experience(new_chore)
     assert test_person.experience[new_chore] == 1
     assert new_chore not in test_person.skills
+
+
+def test_is_shadowing(test_person, new_chore):
+    # The chores require 2 sessions shadowing someone else.
+    training_chore = all_chores[-1]
+
+    assert test_person.is_shadowing(training_chore) == True
+    test_person.add_to_experience(training_chore)
+    assert test_person.is_shadowing(training_chore) == True
+    test_person.add_to_experience(training_chore)
+    assert test_person.is_shadowing(training_chore) == False
+
+    assert test_person.is_shadowing(new_chore) == False
