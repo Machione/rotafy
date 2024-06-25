@@ -9,28 +9,26 @@ from rotafy.rota import row
 today = datetime.date.today()
 tomorrow = today + datetime.timedelta(days=1)
 
-all_chores = [
-    Chore("c1", 1, "every day", True, 2, 1, [today]),
-    Chore("c2", 1, "every day", True, 2, 1, [today]),
-    Chore("c3", 1, "every day", True, 2, 1, [today]),
-]
+c1 = Chore("c1", 1, "every day", True, 2, 1, [today])
+c2 = Chore("c2", 1, "every day", True, 2, 1, [today])
+c3 = Chore("c3", 1, "every day", True, 2, 1, [today])
+all_chores = [c1, c2, c3]
 
-all_people = [
-    Person("p1", all_chores[0:2], "1234", [today], [all_chores[2]]),
-    Person("p2", [all_chores[0], all_chores[2]], "5678", [today], [all_chores[1]]),
-    Person("p3", all_chores[1:], "9000", [today], [all_chores[0]]),
-]
+p1 = Person("p1", [c1, c2], "1234", [today], [c3])
+p2 = Person("p2", [c1, c3], "5678", [today], [c2])
+p3 = Person("p3", [c2, c3], "9000", [today], [c1])
+p4 = Person("p4", [], "9999", [today], [c1])
+all_people = [p1, p2, p3, p4]
 
+# Purposefully in the incorrect order (according to chore.ordinal value).
 all_assignments = [
-    Assignment(tomorrow, all_chores[0], all_people[0], all_people[2], False),
-    Assignment(tomorrow, all_chores[1], all_people[1], None, False),
+    Assignment(tomorrow, c2, p3, None, False),
+    Assignment(tomorrow, c1, p2, p4, False),
 ]
 
 
 @pytest.fixture
 def test_row():
-    all_assignments.sort(key=lambda a: a.chore.name)
-    all_assignments.reverse()
     return row.Row(all_assignments)
 
 
@@ -39,3 +37,23 @@ def test_init(test_row):
         assert assignment in test_row.assignments
 
     assert test_row.date == all_assignments[0].date
+
+
+def test_getitem(test_row):
+    assert test_row[c1] == all_assignments[1]
+    assert test_row[c2] == all_assignments[0]
+    assert test_row[c3] == None
+
+
+def test_setitem(test_row):
+    # Change c1 from p2 to p1.
+    reassignment = Assignment(tomorrow, c1, p1, p4)
+    test_row[c1] = reassignment
+    assert test_row[c1] == reassignment
+    assert len(test_row.assignments) == 2
+
+    # Brand new assignment
+    new_assignment = Assignment(tomorrow, c3, p2)
+    test_row[c3] = new_assignment
+    assert test_row[c3] == new_assignment
+    assert len(test_row.assignments) == 3
