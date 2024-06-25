@@ -57,3 +57,15 @@ def test_setitem(test_row):
     test_row[c3] = new_assignment
     assert test_row[c3] == new_assignment
     assert len(test_row.assignments) == 3
+
+
+def test_delitem(test_row):
+    del test_row[c3]
+    assert len(test_row.assignments) == 2
+    assert test_row[c1] == all_assignments[1]
+    assert test_row[c2] == all_assignments[0]
+    assert test_row[c3] == None
+
+    del test_row[c1]
+    assert len(test_row.assignments) == 1
+    assert test_row[c1] == None
