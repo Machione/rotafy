@@ -1,13 +1,14 @@
 import pytest
 import datetime
-from rotafy.config import chore, person
+from rotafy.config.chore import Chore
+from rotafy.config.person import Person
 from rotafy.rota import assignment
 
 
 all_chores = [
-    chore.Chore("test_chore", 1, "every day", True, 2, 1, [datetime.date.today()]),
-    chore.Chore("other_chore", 1, "every day", True, 2, 1, [datetime.date.today()]),
-    chore.Chore("training", 1, "every day", True, 2, 1, [datetime.date.today()]),
+    Chore("test_chore", 1, "every day", True, 2, 1, [datetime.date.today()]),
+    Chore("other_chore", 1, "every day", True, 2, 1, [datetime.date.today()]),
+    Chore("training", 1, "every day", True, 2, 1, [datetime.date.today()]),
 ]
 
 
@@ -18,7 +19,7 @@ def test_chore():
 
 @pytest.fixture
 def test_person():
-    p = person.Person(
+    p = Person(
         "test_person",
         all_chores[:-1],
         "1234",
@@ -30,8 +31,12 @@ def test_person():
 
 @pytest.fixture
 def trainee_person():
-    p = person.Person(
-        "test_person", all_chores[1:], "5678", [datetime.date.today()], [all_chores[0]]
+    p = Person(
+        "trainee_person",
+        all_chores[1:],
+        "5678",
+        [datetime.date.today()],
+        [all_chores[0]],
     )
     return p
 
@@ -50,3 +55,7 @@ def test_init(test_assignment, test_chore, test_person, trainee_person):
     assert test_assignment.person == test_person
     assert test_assignment.trainee == trainee_person
     assert test_assignment.notification_sent == False
+
+
+def test_repr(test_assignment):
+    assert eval("assignment." + repr(test_assignment)) == test_assignment

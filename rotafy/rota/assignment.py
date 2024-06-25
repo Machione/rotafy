@@ -18,7 +18,15 @@ class Assignment:
         self.notification_sent = notification_sent
 
     def __repr__(self):
-        s = f"Assignment({self.date}, {self.chore}, {self.person}, " f"{self.trainee})"
+        init_args = (
+            self.date,
+            self.chore,
+            self.person,
+            self.trainee,
+            self.notification_sent,
+        )
+        reprs = (repr(arg) for arg in init_args)
+        s = f"Assignment({', '.join(reprs)})"
         return s
 
     def __str__(self):
