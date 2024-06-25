@@ -68,6 +68,9 @@ def test_init(test_assignment, test_chore, test_person, trainee_person):
     assert test_assignment.trainee == trainee_person
     assert test_assignment.notification_sent == False
 
+    with pytest.raises(ValueError):
+        generate_test_assignment(tomorrow, all_chores[0], trainee_person, None, False)
+
 
 def test_repr(test_assignment):
     assert eval("assignment." + repr(test_assignment)) == test_assignment
