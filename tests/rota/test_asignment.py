@@ -131,3 +131,51 @@ def test_eq(
         tomorrow, test_chore, test_person, trainee_person, True
     )
     assert test_assignment == notified
+
+
+def test_hash(
+    test_assignment, no_trainee_assignment, test_chore, test_person, trainee_person
+):
+    assert hash(test_assignment) == hash(test_assignment)
+
+    day_after_tomorrow = datetime.date.today() + datetime.timedelta(days=2)
+    diff_date = generate_test_assignment(
+        day_after_tomorrow, test_chore, test_person, trainee_person, False
+    )
+    assert hash(test_assignment) != hash(diff_date)
+
+    tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+    diff_chore = generate_test_assignment(
+        tomorrow, all_chores[1], test_person, trainee_person, False
+    )
+    assert hash(test_assignment) != hash(diff_chore)
+
+    diff_person = Person(
+        "other_person",
+        all_chores[:-1],
+        "9000",
+        [datetime.date.today()],
+        [all_chores[-1]],
+    )
+    diff_person_assignment = generate_test_assignment(
+        tomorrow, test_chore, diff_person, trainee_person, False
+    )
+    assert hash(test_assignment) != hash(diff_person_assignment)
+
+    diff_trainee = Person(
+        "other_trainee",
+        all_chores[1:],
+        "9000",
+        [datetime.date.today()],
+        [all_chores[0]],
+    )
+    diff_trainee_assignment = generate_test_assignment(
+        tomorrow, test_chore, test_person, diff_trainee, False
+    )
+    assert hash(test_assignment) != hash(diff_trainee_assignment)
+    assert hash(test_assignment) != hash(no_trainee_assignment)
+
+    notified = generate_test_assignment(
+        tomorrow, test_chore, test_person, trainee_person, True
+    )
+    assert hash(test_assignment) == hash(notified)
