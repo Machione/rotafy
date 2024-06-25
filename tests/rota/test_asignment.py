@@ -41,20 +41,23 @@ def trainee_person():
     return p
 
 
-def generate_test_assignment(chore, person, trainee, notification_sent):
-    tomorrow = datetime.date.today() + datetime.timedelta(days=1)
-    a = assignment.Assignment(tomorrow, chore, person, trainee, notification_sent)
+def generate_test_assignment(date, chore, person, trainee, notification_sent):
+    a = assignment.Assignment(date, chore, person, trainee, notification_sent)
     return a
 
 
 @pytest.fixture
 def test_assignment(test_chore, test_person, trainee_person):
-    return generate_test_assignment(test_chore, test_person, trainee_person, False)
+    tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+    return generate_test_assignment(
+        tomorrow, test_chore, test_person, trainee_person, False
+    )
 
 
 @pytest.fixture
 def no_trainee_assignment(test_chore, test_person):
-    return generate_test_assignment(test_chore, test_person, None, False)
+    tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+    return generate_test_assignment(tomorrow, test_chore, test_person, None, False)
 
 
 def test_init(test_assignment, test_chore, test_person, trainee_person):
@@ -80,3 +83,51 @@ def test_str(test_assignment, no_trainee_assignment):
     assert str(test_assignment).startswith(test_assignment.trainee.name)
     assert test_assignment.person.name in str(test_assignment)
     assert "supervised" in str(test_assignment)
+
+
+def test_eq(
+    test_assignment, no_trainee_assignment, test_chore, test_person, trainee_person
+):
+    assert test_assignment == test_assignment
+
+    day_after_tomorrow = datetime.date.today() + datetime.timedelta(days=2)
+    diff_date = generate_test_assignment(
+        day_after_tomorrow, test_chore, test_person, trainee_person, False
+    )
+    assert test_assignment != diff_date
+
+    tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+    diff_chore = generate_test_assignment(
+        tomorrow, all_chores[1], test_person, trainee_person, False
+    )
+    assert test_assignment != diff_chore
+
+    diff_person = Person(
+        "other_person",
+        all_chores[:-1],
+        "9000",
+        [datetime.date.today()],
+        [all_chores[-1]],
+    )
+    diff_person_assignment = generate_test_assignment(
+        tomorrow, test_chore, diff_person, trainee_person, False
+    )
+    assert test_assignment != diff_person_assignment
+
+    diff_trainee = Person(
+        "other_trainee",
+        all_chores[1:],
+        "9000",
+        [datetime.date.today()],
+        [all_chores[0]],
+    )
+    diff_trainee_assignment = generate_test_assignment(
+        tomorrow, test_chore, test_person, diff_trainee, False
+    )
+    assert test_assignment != diff_trainee_assignment
+    assert test_assignment != no_trainee_assignment
+
+    notified = generate_test_assignment(
+        tomorrow, test_chore, test_person, trainee_person, True
+    )
+    assert test_assignment == notified
