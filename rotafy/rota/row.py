@@ -69,3 +69,4 @@ class Row:
             )
 
         self._assignments = assignments
+        self._assignments.sort(key=lambda a: a.chore.ordinal)
