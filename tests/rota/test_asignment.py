@@ -6,7 +6,7 @@ from rotafy.rota import assignment
 
 
 all_chores = [
-    Chore("test_chore", 1, "every day", True, 2, 1, [datetime.date.today()]),
+    Chore("test_chore", 1, "every day", True, 2, 1, []),
     Chore("other_chore", 1, "every day", True, 2, 1, [datetime.date.today()]),
     Chore("training", 1, "every day", True, 2, 1, [datetime.date.today()]),
 ]
@@ -61,7 +61,8 @@ def no_trainee_assignment(test_chore, test_person):
 
 
 def test_init(test_assignment, test_chore, test_person, trainee_person):
-    tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+    today = datetime.date.today()
+    tomorrow = today + datetime.timedelta(days=1)
     assert test_assignment.date == tomorrow
     assert test_assignment.chore == test_chore
     assert test_assignment.person == test_person
@@ -69,7 +70,11 @@ def test_init(test_assignment, test_chore, test_person, trainee_person):
     assert test_assignment.notification_sent == False
 
     with pytest.raises(ValueError):
-        generate_test_assignment(tomorrow, all_chores[0], trainee_person, None, False)
+        generate_test_assignment(tomorrow, test_chore, trainee_person, None, False)
+        generate_test_assignment(today, test_chore, test_person, None, False)
+        today_person = Person("today_person", all_chores[:-1], "1234")
+        generate_test_assignment(today, test_chore, today_person, trainee_person, False)
+        generate_test_assignment(today, all_chores[1], test_person, None, False)
 
 
 def test_repr(test_assignment):

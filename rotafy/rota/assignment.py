@@ -11,8 +11,17 @@ class Assignment:
         trainee: person.Person | None = None,
         notification_sent: bool = False,
     ) -> None:
-        if person.qualified(chore) == False:
-            raise ValueError(f"{person} is not qualified to do {chore}.")
+        if person.can_do(chore, date) == False:
+            if person.qualified(chore) == False:
+                raise ValueError(f"{person} is not qualified to do {chore}.")
+            else:
+                raise ValueError(f"{person} is not available on {date}.")
+
+        if trainee is not None and trainee.available(date) == False:
+            raise ValueError(f"{trainee} is not available on {date}.")
+
+        if chore.on(date) == False:
+            raise ValueError(f"{chore} is not scheduled to happen on {date}.")
 
         self.date = date
         self.chore = chore
