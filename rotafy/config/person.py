@@ -21,14 +21,14 @@ class Person:
         self.experience = {c: 0 for c in self._raw_training if c not in self.skills}
 
     def __repr__(self) -> str:
-        init_args = [
+        init_args = (
             self.name,
             self.skills,
             self.telephone,
             self.unavailable,
             self._raw_training,
-        ]
-        reprs = [repr(arg) for arg in init_args]
+        )
+        reprs = (repr(arg) for arg in init_args)
         s = f"Person({', '.join(reprs)})"
         return s
 

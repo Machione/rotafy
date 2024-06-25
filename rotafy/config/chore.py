@@ -25,7 +25,7 @@ class Chore:
         self.exceptions = exceptions
 
     def __repr__(self) -> str:
-        init_args = [
+        init_args = (
             self.name,
             self.ordinal,
             self._raw_recurrence,
@@ -33,8 +33,8 @@ class Chore:
             self.num_training_sessions,
             self.num_shadowing_sessions,
             self.exceptions,
-        ]
-        reprs = [repr(arg) for arg in init_args]
+        )
+        reprs = (repr(arg) for arg in init_args)
         s = f"Chore({', '.join(reprs)})"
         return s
 
