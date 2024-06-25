@@ -41,11 +41,20 @@ def trainee_person():
     return p
 
 
+def generate_test_assignment(chore, person, trainee, notification_sent):
+    tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+    a = assignment.Assignment(tomorrow, chore, person, trainee, notification_sent)
+    return a
+
+
 @pytest.fixture
 def test_assignment(test_chore, test_person, trainee_person):
-    tomorrow = datetime.date.today() + datetime.timedelta(days=1)
-    a = assignment.Assignment(tomorrow, test_chore, test_person, trainee_person, False)
-    return a
+    return generate_test_assignment(test_chore, test_person, trainee_person, False)
+
+
+@pytest.fixture
+def no_trainee_assignment(test_chore, test_person):
+    return generate_test_assignment(test_chore, test_person, None, False)
 
 
 def test_init(test_assignment, test_chore, test_person, trainee_person):
@@ -59,3 +68,15 @@ def test_init(test_assignment, test_chore, test_person, trainee_person):
 
 def test_repr(test_assignment):
     assert eval("assignment." + repr(test_assignment)) == test_assignment
+
+
+def test_str(test_assignment, no_trainee_assignment):
+    assert str(no_trainee_assignment) == no_trainee_assignment.person.name
+    assert str(test_assignment).startswith(test_assignment.person.name)
+    assert test_assignment.trainee.name in str(test_assignment)
+    assert "shadowing" in str(test_assignment)
+    test_assignment.trainee.add_to_experience(all_chores[0])
+    test_assignment.trainee.add_to_experience(all_chores[0])
+    assert str(test_assignment).startswith(test_assignment.trainee.name)
+    assert test_assignment.person.name in str(test_assignment)
+    assert "supervised" in str(test_assignment)
