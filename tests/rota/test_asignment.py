@@ -179,3 +179,11 @@ def test_hash(
         tomorrow, test_chore, test_person, trainee_person, True
     )
     assert hash(test_assignment) == hash(notified)
+
+
+def test_mark_notified(test_assignment):
+    assert test_assignment.notification_sent == False
+    test_assignment.mark_notified()
+    assert test_assignment.notification_sent == True
+    test_assignment.mark_notified()
+    assert test_assignment.notification_sent == True
