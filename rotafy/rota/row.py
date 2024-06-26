@@ -1,6 +1,32 @@
+import datetime
+from collections import Counter
 from typing import Iterable
-from rotafy.config import chore
+from rotafy.config import chore, person
 from rotafy.rota import assignment
+
+
+class NoAssignments(Exception):
+    def __init__(self) -> None:
+        super().__init__("Need to provide one or more chore assignments.")
+
+
+class MultipleDates(Exception):
+    def __init__(self, dates: Iterable[datetime.date]) -> None:
+        super().__init__(
+            f"Chore assignments must be all on the same date. Given dates: {dates}"
+        )
+
+
+class ChoreAssignedMultipleTimes(Exception):
+    def __init__(self, chore: chore.Chore) -> None:
+        super().__init__(f"Cannot assign {chore.name} more than once on the same date.")
+
+
+class PersonAssignedMultipleTimes(Exception):
+    def __init__(self, person: person.Person) -> None:
+        super().__init__(
+            f"Cannot assign {person.name} more than once on the same date."
+        )
 
 
 class Row:
@@ -35,37 +61,20 @@ class Row:
         num_assignments = len(assignments)
 
         if num_assignments == 0:
-            raise IndexError("Need to provide one or more chore assignments.")
+            raise NoAssignments
 
-        distinct_assignment_dates = set(a.date for a in assignments)
-        if len(distinct_assignment_dates) > 1:
-            raise IndexError("Chore assignments must be all on the same date.")
+        distinct_dates = set(a.date for a in assignments)
+        if len(distinct_dates) > 1:
+            raise MultipleDates(distinct_dates)
 
-        distinct_chores = set(a.chore for a in assignments)
-        if len(distinct_chores) < num_assignments:
-            raise ValueError(
-                "Cannot assign more than one chore of the same name on a date."
-            )
+        chore_counts = Counter(a.chore for a in assignments)
+        if any(v > 1 for v in chore_counts.values()):
+            raise ChoreAssignedMultipleTimes(chore_counts.most_common(1)[0][0])
 
-        distinct_people = set(a.person for a in assignments)
-        if len(distinct_people) < num_assignments:
-            raise ValueError(
-                "Cannot assign more than one chore to the same person on a given date."
-            )
-
-        all_trainees = [a.trainee for a in assignments if a.trainee is not None]
-        if any(trainee in distinct_people for trainee in all_trainees):
-            raise ValueError(
-                "Cannot assign someone to be a trainee and also give them a "
-                "chore on the same date."
-            )
-
-        distinct_trainees = set(all_trainees)
-        if len(distinct_trainees) < len(all_trainees):
-            raise ValueError(
-                "Cannot assign the same trainee to more than one chore on a "
-                "given date."
-            )
+        people_counts = Counter(a.person for a in assignments)
+        people_counts.update(a.trainee for a in assignments if a.trainee is not None)
+        if any(v > 1 for v in people_counts.values()):
+            raise PersonAssignedMultipleTimes(people_counts.most_common(1)[0][0])
 
         self._assignments = assignments
         self._assignments.sort(key=lambda a: a.chore.ordinal)

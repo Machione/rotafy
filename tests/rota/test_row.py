@@ -40,7 +40,7 @@ def test_init(test_row):
 
 
 def test_assignments():
-    with pytest.raises(IndexError):
+    with pytest.raises(row.NoAssignments):
         row.Row([])
 
     test_assignment = all_assignments[0]
@@ -49,32 +49,35 @@ def test_assignments():
     test_person = test_assignment.person
 
     diff_date = test_assignment.date + datetime.timedelta(days=1)
-    diff_date_assignment = Assignment(diff_date, test_chore, test_person, None, False)
-    with pytest.raises(IndexError):
-        row.Row([test_assignment, diff_date_assignment])
-
-    with pytest.raises(ValueError):
-        row.Row([test_assignment, test_assignment])
-
     diff_chore = [
         c for c in all_chores if test_person.qualified(c) and c != test_chore
     ][0]
-    same_person_assignment = Assignment(test_date, diff_chore, test_person, None, False)
-    with pytest.raises(ValueError):
+    diff_person = [
+        p for p in all_people if p.qualified(diff_chore) and p != test_person
+    ][0]
+
+    diff_date_assignment = Assignment(diff_date, diff_chore, diff_person)
+    with pytest.raises(row.MultipleDates):
+        row.Row([test_assignment, diff_date_assignment])
+
+    with pytest.raises(row.ChoreAssignedMultipleTimes):
+        row.Row([test_assignment, test_assignment])
+
+    same_person_assignment = Assignment(test_date, diff_chore, test_person)
+    with pytest.raises(row.PersonAssignedMultipleTimes):
         row.Row([test_assignment, same_person_assignment])
 
-    person1 = [p for p in all_people if p.qualified(diff_chore) and p != test_person][0]
-    trainee1 = Assignment(test_date, diff_chore, person1, test_person, False)
-    with pytest.raises(ValueError):
+    trainee1 = Assignment(test_date, diff_chore, diff_person, test_person)
+    with pytest.raises(row.PersonAssignedMultipleTimes):
         row.Row([test_assignment, trainee1])
 
     person2 = [
         p
         for p in all_people
-        if p.qualified(test_chore) and p != test_person and p != person1
+        if p.qualified(test_chore) and p != test_person and p != diff_person
     ][0]
     trainee2 = Assignment(test_date, test_chore, person2, test_person, False)
-    with pytest.raises(ValueError):
+    with pytest.raises(row.PersonAssignedMultipleTimes):
         row.Row([trainee1, trainee2])
 
 
