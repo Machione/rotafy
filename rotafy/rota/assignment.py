@@ -23,6 +23,9 @@ class Assignment:
         if chore.on(date) == False:
             raise ValueError(f"{chore} is not scheduled to happen on {date}.")
 
+        if person == trainee:
+            trainee = None
+
         self.date = date
         self.chore = chore
         self.person = person

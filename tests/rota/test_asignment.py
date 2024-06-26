@@ -76,6 +76,12 @@ def test_init(test_assignment, test_chore, test_person, trainee_person):
         generate_test_assignment(today, test_chore, today_person, trainee_person, False)
         generate_test_assignment(today, all_chores[1], test_person, None, False)
 
+    same_person = generate_test_assignment(
+        tomorrow, test_chore, test_person, test_person, False
+    )
+    assert same_person.person == test_person
+    assert same_person.trainee == None
+
 
 def test_repr(test_assignment):
     assert eval("assignment." + repr(test_assignment)) == test_assignment
