@@ -4,6 +4,18 @@ from dateutil import rrule
 from typing import Iterable
 
 
+class NoChoreName(Exception):
+    def __init__(self) -> None:
+        super().__init__("Must provide a chore name in the TOML configuration file.")
+
+
+class ChoreNotFound(Exception):
+    def __init__(self, chore_name: str) -> None:
+        super().__init__(
+            f"Cannot find chore named {chore_name} among the list of chores."
+        )
+
+
 class Chore:
     def __init__(
         self,
@@ -71,10 +83,7 @@ class Chore:
     @name.setter
     def name(self, value: str) -> None:
         if len(value.strip()) == 0:
-            raise ValueError(
-                "You must provide a non-empty chore name in the TOML "
-                "configuration file."
-            )
+            raise NoChoreName
 
         self._name = value.strip()
 
@@ -93,10 +102,6 @@ def generate_rrule(recurrence: str) -> rrule.rrule:
     return rule
 
 
-class ChoreNotFound(Exception):
-    pass
-
-
 def find_chore(chore_name: str, chores: Iterable[Chore]) -> Chore:
     for chore in chores:
         if chore.name == chore_name:
@@ -106,6 +111,4 @@ def find_chore(chore_name: str, chores: Iterable[Chore]) -> Chore:
         if chore.name.lower() == chore_name.lower():
             return chore
 
-    raise ChoreNotFound(
-        f"Cannot find chore named {chore_name} among the list of chores."
-    )
+    raise ChoreNotFound(chore_name)

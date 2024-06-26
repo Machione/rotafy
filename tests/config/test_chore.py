@@ -31,7 +31,7 @@ def test_init(test_chore):
 
 
 def test_name():
-    with pytest.raises(ValueError):
+    with pytest.raises(chore.NoChoreName):
         basic_chore_generator("")
         basic_chore_generator(None)
         basic_chore_generator("    ")
