@@ -69,12 +69,18 @@ def test_init(test_assignment, test_chore, test_person, trainee_person):
     assert test_assignment.trainee == trainee_person
     assert test_assignment.notification_sent == False
 
-    with pytest.raises(ValueError):
+    with pytest.raises(assignment.NotQualified):
         generate_test_assignment(tomorrow, test_chore, trainee_person, None, False)
+
+    with pytest.raises(assignment.PersonUnavailable):
         generate_test_assignment(today, test_chore, test_person, None, False)
-        today_person = Person("today_person", all_chores[:-1], "1234")
+
+    today_person = Person("today_person", all_chores[:-1], "1234")
+    with pytest.raises(assignment.PersonUnavailable):
         generate_test_assignment(today, test_chore, today_person, trainee_person, False)
-        generate_test_assignment(today, all_chores[1], test_person, None, False)
+
+    with pytest.raises(assignment.ChoreNotScheduled):
+        generate_test_assignment(today, all_chores[1], today_person, None, False)
 
     same_person = generate_test_assignment(
         tomorrow, test_chore, test_person, test_person, False

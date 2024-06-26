@@ -2,7 +2,23 @@ import datetime
 from rotafy.config import chore, person
 
 
+class NotQualified(Exception):
+    def __init(self, person: person.Person, chore: chore.Chore) -> None:
+        super().__init__(f"{person.name} is not qualified to do {chore.name}")
+
+
+class PersonUnavailable(Exception):
+    def __init(self, person: person.Person, date: datetime.date) -> None:
+        super().__init__(f"{person.name} is not available on {date}.")
+
+
+class ChoreNotScheduled(Exception):
+    def __init(self, chore: chore.Chore, date: datetime.date) -> None:
+        super().__init__(f"{chore} is not scheduled to happen on {date}.")
+
+
 class Assignment:
+
     def __init__(
         self,
         date: datetime.date,
@@ -11,17 +27,18 @@ class Assignment:
         trainee: person.Person | None = None,
         notification_sent: bool = False,
     ) -> None:
-        if person.can_do(chore, date) == False:
-            if person.qualified(chore) == False:
-                raise ValueError(f"{person} is not qualified to do {chore}.")
-            else:
-                raise ValueError(f"{person} is not available on {date}.")
+
+        if person.qualified(chore) == False:
+            raise NotQualified(person, chore)
+
+        if person.available(date) == False:
+            raise PersonUnavailable(person, date)
 
         if trainee is not None and trainee.available(date) == False:
-            raise ValueError(f"{trainee} is not available on {date}.")
+            raise PersonUnavailable(person, date)
 
         if chore.on(date) == False:
-            raise ValueError(f"{chore} is not scheduled to happen on {date}.")
+            raise ChoreNotScheduled(chore, date)
 
         if person == trainee:
             trainee = None
