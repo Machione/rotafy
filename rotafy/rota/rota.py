@@ -7,6 +7,13 @@ from typing import Iterable
 from rotafy.rota import row
 
 
+class MismatchedDates(Exception):
+    def __init__(self, set_date: datetime.date, new_date: datetime.date) -> None:
+        super().__init__(
+            f"Date of new row ({new_date}) must match the and date being set ({set_date})."
+        )
+
+
 class Rota:
     def __init__(self, name: str) -> None:
         self.name = name
@@ -26,7 +33,7 @@ class Rota:
 
     def __setitem__(self, date: datetime.date, new_row: row.Row) -> None:
         if date != new_row.date:
-            raise IndexError("Date of new row and date to add to rota must match.")
+            raise MismatchedDates(date, new_row.date)
 
         return self.add_row(new_row)
 
