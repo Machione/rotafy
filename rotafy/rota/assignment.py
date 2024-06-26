@@ -4,7 +4,7 @@ from rotafy.config import chore, person
 
 class NotQualified(Exception):
     def __init(self, person: person.Person, chore: chore.Chore) -> None:
-        super().__init__(f"{person.name} is not qualified to do {chore.name}")
+        super().__init__(f"{person.name} is not qualified to do {chore.name}.")
 
 
 class PersonUnavailable(Exception):

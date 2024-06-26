@@ -13,7 +13,7 @@ class NoAssignments(Exception):
 class MultipleDates(Exception):
     def __init__(self, dates: Iterable[datetime.date]) -> None:
         super().__init__(
-            f"Chore assignments must be all on the same date. Given dates: {dates}"
+            f"Chore assignments must be all on the same date. Given dates: {dates}."
         )
 
 
