@@ -10,6 +10,18 @@ from rotafy.rota import printable, assignment, row
 from rotafy.api import notifier
 
 
+class DateNotFound(Exception):
+    def __init__(self, date: datetime.date) -> None:
+        super().__init__(f"No existing rota row on {date}. Try `add` instead.")
+
+
+class PersonNotAssigned(Exception):
+    def __init__(self, person: person.Person, date: datetime.date) -> None:
+        super().__init__(
+            f"{person.name} is not assigned to a chore on {date}. Try `add` instead."
+        )
+
+
 class Manager:
     def __init__(self, toml_file_path: str) -> None:
         self.configuration = config.Config(toml_file_path)
@@ -54,16 +66,13 @@ class Manager:
     ) -> None:
         existing_row = self.rota[date]
         if existing_row is None:
-            raise IndexError(f"No existing rota row on {date} to replace.")
+            raise DateNotFound(date)
 
         existing_assignment = [
             a for a in existing_row.assignments if a.person.name == person_name
         ]
         if len(existing_assignment) != 1:
-            raise IndexError(
-                f"{person_name} is not assigned to a chore on {date}. Use "
-                ".add() to add them instead."
-            )
+            raise PersonNotAssigned(person, date)
 
         chore_name = existing_assignment[0].chore.name
         self.add(date, chore_name, replacement_name)
