@@ -66,10 +66,46 @@ def test_eq(test_person, other_person):
     assert test_person == test_person
     assert test_person != other_person
 
+    same_name = person.Person(
+        test_person.name,
+        test_person.skills,
+        "5678",
+        test_person.unavailable,
+        test_person._raw_training,
+    )
+    assert test_person != same_name
+
+    same_telephone = person.Person(
+        "same_telephone",
+        test_person.skills,
+        test_person.telephone,
+        test_person.unavailable,
+        test_person._raw_training,
+    )
+    assert test_person != same_telephone
+
 
 def test_hash(test_person, other_person):
     assert hash(test_person) == hash(test_person)
     assert hash(test_person) != hash(other_person)
+
+    same_name = person.Person(
+        test_person.name,
+        test_person.skills,
+        "5678",
+        test_person.unavailable,
+        test_person._raw_training,
+    )
+    assert hash(test_person) != hash(same_name)
+
+    same_telephone = person.Person(
+        "same_telephone",
+        test_person.skills,
+        test_person.telephone,
+        test_person.unavailable,
+        test_person._raw_training,
+    )
+    assert hash(test_person) != hash(same_telephone)
 
 
 def test_qualified(test_person):

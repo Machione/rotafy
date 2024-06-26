@@ -48,10 +48,10 @@ class Person:
         return self.name
 
     def __eq__(self, other) -> bool:
-        return other and self.name == other.name
+        return other and self.name == other.name and self.telephone == other.telephone
 
     def __hash__(self) -> int:
-        return hash(self.name)
+        return hash((self.name, self.telephone))
 
     def qualified(self, chore: chore.Chore) -> bool:
         return chore in self.skills
