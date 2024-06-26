@@ -44,14 +44,13 @@ class Row:
         distinct_chores = set(a.chore for a in assignments)
         if len(distinct_chores) < num_assignments:
             raise ValueError(
-                "Cannot assign more than one chore of the same name on a " "date."
+                "Cannot assign more than one chore of the same name on a date."
             )
 
         distinct_people = set(a.person for a in assignments)
         if len(distinct_people) < num_assignments:
             raise ValueError(
-                "Cannot assign more than one chore of the same name to the "
-                "same person on a given date."
+                "Cannot assign more than one chore to the same person on a given date."
             )
 
         all_trainees = [a.trainee for a in assignments if a.trainee is not None]

@@ -39,6 +39,45 @@ def test_init(test_row):
     assert test_row.date == all_assignments[0].date
 
 
+def test_assignments():
+    with pytest.raises(IndexError):
+        row.Row([])
+
+    test_assignment = all_assignments[0]
+    test_date = test_assignment.date
+    test_chore = test_assignment.chore
+    test_person = test_assignment.person
+
+    diff_date = test_assignment.date + datetime.timedelta(days=1)
+    diff_date_assignment = Assignment(diff_date, test_chore, test_person, None, False)
+    with pytest.raises(IndexError):
+        row.Row([test_assignment, diff_date_assignment])
+
+    with pytest.raises(ValueError):
+        row.Row([test_assignment, test_assignment])
+
+    diff_chore = [
+        c for c in all_chores if test_person.qualified(c) and c != test_chore
+    ][0]
+    same_person_assignment = Assignment(test_date, diff_chore, test_person, None, False)
+    with pytest.raises(ValueError):
+        row.Row([test_assignment, same_person_assignment])
+
+    person1 = [p for p in all_people if p.qualified(diff_chore) and p != test_person][0]
+    trainee1 = Assignment(test_date, diff_chore, person1, test_person, False)
+    with pytest.raises(ValueError):
+        row.Row([test_assignment, trainee1])
+
+    person2 = [
+        p
+        for p in all_people
+        if p.qualified(test_chore) and p != test_person and p != person1
+    ][0]
+    trainee2 = Assignment(test_date, test_chore, person2, test_person, False)
+    with pytest.raises(ValueError):
+        row.Row([trainee1, trainee2])
+
+
 def test_getitem(test_row):
     assert test_row[c1] == all_assignments[1]
     assert test_row[c2] == all_assignments[0]
