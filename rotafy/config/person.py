@@ -3,6 +3,18 @@ from typing import Iterable
 from rotafy.config import chore
 
 
+class NoPersonName(Exception):
+    def __init__(self) -> None:
+        super().__init__("Must provide a person name in the TOML configuration file.")
+
+
+class PersonNotFound(Exception):
+    def __init__(self, person_name: str) -> None:
+        super().__init__(
+            f"Cannot find person named {person_name} among the list of people."
+        )
+
+
 class Person:
     def __init__(
         self,
@@ -97,16 +109,9 @@ class Person:
     @name.setter
     def name(self, value: str) -> None:
         if len(value.strip()) == 0:
-            raise ValueError(
-                "You must provide a non-empty person name in the TOML "
-                "configuration file."
-            )
+            raise NoPersonName
 
         self._name = value.strip()
-
-
-class PersonNotFound(Exception):
-    pass
 
 
 def find_person(person_name: str, people: Iterable[Person]) -> Person:
@@ -118,6 +123,4 @@ def find_person(person_name: str, people: Iterable[Person]) -> Person:
         if person.name.lower() == person_name.lower():
             return person
 
-    raise PersonNotFound(
-        f"Cannot find person named {person_name} among the list of people."
-    )
+    raise PersonNotFound(person_name)

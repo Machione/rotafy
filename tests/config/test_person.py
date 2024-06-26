@@ -45,7 +45,7 @@ def test_init(test_person):
 
 
 def test_name():
-    with pytest.raises(ValueError):
+    with pytest.raises(person.NoPersonName):
         basic_person_generator("")
         basic_person_generator(None)
         basic_person_generator("    ")
