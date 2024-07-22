@@ -19,3 +19,17 @@ def loadable_printable():
 def test_init(test_printable):
     assert test_printable.name == "test_printable"
     assert isinstance(test_printable, rota.Rota)
+
+
+def test_ordinal(test_printable):
+    assert test_printable._ordinal(1) == "1st"
+    assert test_printable._ordinal(2) == "2nd"
+    assert test_printable._ordinal(3) == "3rd"
+    for x in range(4, 21):
+        assert test_printable._ordinal(x) == str(x) + "th"
+
+    assert test_printable._ordinal(21) == "21st"
+    assert test_printable._ordinal(22) == "22nd"
+    assert test_printable._ordinal(23) == "23rd"
+    for x in range(24, 31):
+        assert test_printable._ordinal(x) == str(x) + "th"
