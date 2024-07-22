@@ -178,3 +178,8 @@ def test_rows_prior(test_rota, loadable_rota):
     assert len(rows_prior_inc) == len(rows_prior_noninc) + 1
     for r in rows_prior_inc:
         assert r.date <= mid_date
+
+
+def test_latest_date(test_rota, loadable_rota):
+    assert test_rota.latest_date == datetime.date.today()
+    assert loadable_rota.latest_date == max(r.date for r in loadable_rota.rows)
