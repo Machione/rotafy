@@ -75,8 +75,8 @@ class Rota:
         return [row for row in self.rows if row.date < date]
 
     @property
-    def latest_date(self):
+    def latest_date(self) -> datetime.date:
         if len(self.rows) == 0:
-            return datetime.datetime.today().date()
+            return datetime.date.today()
 
         return max(row.date for row in self.rows)
