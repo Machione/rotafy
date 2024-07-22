@@ -147,3 +147,34 @@ def test_del_item(test_rota, loadable_rota):
     loadable_rota.delete_row(loadable_rota_date)
     assert len(loadable_rota.rows) == loadable_rota_size - 1
     assert loadable_rota[loadable_rota_date] is None
+
+
+def test_rows_prior(test_rota, loadable_rota):
+    today = datetime.date.today()
+    assert len(test_rota.rows_prior(today)) == 0
+
+    first_date = min(x.date for x in loadable_rota.rows)
+    assert len(loadable_rota.rows_prior(first_date)) == 0
+    assert len(loadable_rota.rows_prior(first_date, True)) == 1
+    assert loadable_rota.rows_prior(first_date, True)[0].date == first_date
+
+    last_date = max(x.date for x in loadable_rota.rows)
+    assert len(loadable_rota.rows_prior(last_date)) == len(loadable_rota.rows) - 1
+    assert len(loadable_rota.rows_prior(last_date, True)) == len(loadable_rota.rows)
+
+    assert len(loadable_rota.rows_prior(today)) == len(loadable_rota.rows)
+    assert len(loadable_rota.rows_prior(today, True)) == len(loadable_rota.rows)
+
+    mid_date_index = round(len(loadable_rota.rows) / 2)
+    mid_date = loadable_rota.rows[mid_date_index].date
+    rows_prior_noninc = loadable_rota.rows_prior(mid_date)
+    assert len(rows_prior_noninc) > 0
+    assert len(rows_prior_noninc) < len(loadable_rota.rows)
+    for r in rows_prior_noninc:
+        assert r.date < mid_date
+
+    rows_prior_inc = loadable_rota.rows_prior(mid_date, True)
+    assert mid_date in [r.date for r in rows_prior_inc]
+    assert len(rows_prior_inc) == len(rows_prior_noninc) + 1
+    for r in rows_prior_inc:
+        assert r.date <= mid_date
