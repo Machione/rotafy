@@ -70,11 +70,9 @@ class Rota:
         self.sort()
 
         if inc:
-            prior = [row for row in self.rows if row.date <= date]
-        else:
-            prior = [row for row in self.rows if row.date < date]
+            return [row for row in self.rows if row.date <= date]
 
-        return prior
+        return [row for row in self.rows if row.date < date]
 
     @property
     def latest_date(self):
