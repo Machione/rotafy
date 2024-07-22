@@ -59,7 +59,6 @@ class Rota:
         all_row_dates = set(r.date for r in self.rows)
         if new_row.date in all_row_dates:
             self.delete_row(new_row.date)
-            print(f"Overwrote assignments on {new_row.date}.")
 
         self.rows.append(copy.deepcopy(new_row))
         self.sort()
