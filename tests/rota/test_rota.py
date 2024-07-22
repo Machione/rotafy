@@ -13,7 +13,7 @@ def test_rota():
 
 
 @pytest.fixture
-def loadable_rota(tmp_path):
+def loadable_rota():
     r = rota.Rota("loadable_rota")
     r.file_path = "tests/rota/loadable_rota_data.pkl"
     r.load()
