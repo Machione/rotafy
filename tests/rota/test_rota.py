@@ -1,5 +1,6 @@
 import pytest
 import datetime
+import pickle
 from rotafy.rota import rota, row, assignment
 from rotafy.config import chore, person
 
@@ -77,3 +78,16 @@ def test_del_item(test_rota, loadable_rota):
     del loadable_rota[loadable_rota_date]
     assert len(loadable_rota.rows) == loadable_rota_size - 1
     assert loadable_rota[loadable_rota_date] is None
+
+
+def test_load(test_rota, loadable_rota):
+    test_rota.load()
+    assert len(test_rota.rows) == 0
+
+    with open("tests/rota/loadable_rota_data.pkl", "rb") as f:
+        loadable_rota_data = pickle.load(f)
+
+    loadable_rota.load()
+    assert len(loadable_rota.rows) == len(loadable_rota_data)
+    for x in loadable_rota.rows:
+        assert isinstance(x, row.Row)
