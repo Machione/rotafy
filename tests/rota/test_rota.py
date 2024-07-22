@@ -1,6 +1,7 @@
 import pytest
 import datetime
 import pickle
+import os
 from rotafy.rota import rota, row, assignment
 from rotafy.config import chore, person
 
@@ -84,10 +85,25 @@ def test_load(test_rota, loadable_rota):
     test_rota.load()
     assert len(test_rota.rows) == 0
 
-    with open("tests/rota/loadable_rota_data.pkl", "rb") as f:
+    with open(loadable_rota.file_path, "rb") as f:
         loadable_rota_data = pickle.load(f)
 
     loadable_rota.load()
     assert len(loadable_rota.rows) == len(loadable_rota_data)
     for x in loadable_rota.rows:
         assert isinstance(x, row.Row)
+
+
+def test_save(test_rota, loadable_rota):
+    current_modified_time = os.path.getmtime(loadable_rota.file_path)
+    current_number_rows = len(loadable_rota.rows)
+    loadable_rota.save()
+    assert os.path.getmtime(loadable_rota.file_path) > current_modified_time
+    loadable_rota.load()
+    assert len(loadable_rota.rows) == current_number_rows
+
+    test_rota.save()
+    assert os.path.isfile(test_rota.file_path)
+    test_rota.load()
+    assert len(test_rota.rows) == 0
+    os.remove(test_rota.file_path)
