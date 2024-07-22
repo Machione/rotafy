@@ -2,6 +2,7 @@ import pytest
 import datetime
 import pickle
 import os
+import random
 from rotafy.rota import rota, row, assignment
 from rotafy.config import chore, person
 
@@ -52,11 +53,11 @@ def test_set_item(test_rota, loadable_rota, test_row):
     with pytest.raises(rota.MismatchedDates):
         test_rota[today + datetime.timedelta(days=1)] = test_row
 
-    loadable_rota_date = loadable_rota.rows[0].date
     loadable_rota[today] = test_row
     for a in test_row.assignments:
         assert a in loadable_rota[today].assignments
 
+    loadable_rota_date = loadable_rota.rows[0].date
     with pytest.raises(rota.MismatchedDates):
         loadable_rota[loadable_rota_date] = test_row
 
@@ -107,3 +108,42 @@ def test_save(test_rota, loadable_rota):
     test_rota.load()
     assert len(test_rota.rows) == 0
     os.remove(test_rota.file_path)
+
+
+def test_sort(loadable_rota):
+    random.shuffle(loadable_rota.rows)
+    loadable_rota.sort()
+    dates = [r.date for r in loadable_rota.rows]
+    assert dates == sorted(dates)
+
+
+def test_add_row(test_rota, loadable_rota, test_row):
+    today = datetime.date.today()
+    test_rota.add_row(test_row)
+    for a in test_row.assignments:
+        assert a in test_rota[today].assignments
+
+    loadable_rota.add_row(test_row)
+    for a in test_row.assignments:
+        assert a in loadable_rota[today].assignments
+
+    loadable_rota_date = loadable_rota.rows[0].date
+    test_row.date = loadable_rota_date
+    loadable_rota.add_row(test_row)
+    for a in test_row.assignments:
+        assert a in loadable_rota[loadable_rota_date].assignments
+
+
+def test_del_item(test_rota, loadable_rota):
+    today = datetime.date.today()
+    test_rota.delete_row(today)
+    assert len(test_rota.rows) == 0
+
+    loadable_rota_size = len(loadable_rota.rows)
+    loadable_rota.delete_row(today)
+    assert len(loadable_rota.rows) == loadable_rota_size
+
+    loadable_rota_date = loadable_rota.rows[0].date
+    loadable_rota.delete_row(loadable_rota_date)
+    assert len(loadable_rota.rows) == loadable_rota_size - 1
+    assert loadable_rota[loadable_rota_date] is None
