@@ -51,13 +51,6 @@ class Manager:
     def to_pdf(self, output_file: str) -> None:
         self.rota.pdf(output_file)
 
-    def next_chore_date(self) -> datetime.date:
-        latest_rota_date = self.rota.latest_date
-        next_dates_per_chore = [
-            c.next(latest_rota_date) for c in self.configuration.chores
-        ]
-        return min(next_dates_per_chore)
-
     def chores_on(self, date: datetime.date) -> Iterable[chore.Chore]:
         return set(c for c in self.configuration.chores if c.on(date))
 
