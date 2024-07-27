@@ -219,11 +219,11 @@ class Manager:
 
                 if (
                     updated_chore.on(a.date) == False
-                    or updated_person.can_do(a.chore, a.date) == False
+                    or updated_person.available(a.date) == False
                 ):
                     if updated_chore.on(a.date) == False:
                         logger.info(f"Removing {a.chore.name} - no longer on {a.date}")
-                    else:
+                    elif updated_person.available(a.date) == False:
                         logger.info(
                             f"Removing {a.person.name} - no longer available on {a.date}"
                         )
