@@ -18,6 +18,8 @@ jinja2 = "^3.1.4"
 retry = "^0.9.2"
 click = "^8.1.7"
 
+[tool.poetry.scripts]
+rotafy = "rotafy.cli:cli"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.2.2"
