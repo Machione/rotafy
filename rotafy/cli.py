@@ -37,14 +37,6 @@ def to_pdf(m, filename):
     m.to_pdf(filename)
 
 
-@cli.command(
-    help="Assign the upcoming chores in the rota, according to lookahead_days in the CONFIGURATION_FILE."
-)
-@click.pass_obj
-def autofill(m):
-    m.fill()
-
-
 @cli.command(help="Send notifications to individuals with upcoming chores.")
 @click.pass_obj
 def notify(m):
@@ -57,7 +49,16 @@ def notify(m):
 @click.argument("person", type=click.STRING, required=True)
 @click.pass_obj
 def assign(m, date, chore, person):
-    m.add(date.date(), chore, person)
+    m.add_person(date.date(), chore, person)
+
+
+@cli.command(help="Swap two peoples' assigned chores on the same date.")
+@click.argument("date", type=click.DateTime(), required=True)
+@click.argument("person1", type=click.STRING, required=True)
+@click.argument("person2", type=click.STRING, required=True)
+@click.pass_obj
+def swap(m, date, person1, person2):
+    m.swap(date.date(), person1, person2)
 
 
 @cli.command(help="Replace a person with another on a given date.")
