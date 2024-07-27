@@ -2,7 +2,6 @@ import datetime
 import itertools
 from typing import Iterable
 import random
-import math
 from retry.api import retry_call
 from clicksend_client.rest import ApiException
 from rotafy.config import config, chore, person
@@ -12,14 +11,26 @@ from rotafy.api import notifier
 
 class DateNotFound(Exception):
     def __init__(self, date: datetime.date) -> None:
-        super().__init__(f"No existing rota row on {date}. Try `add` instead.")
+        super().__init__(f"No existing rota row on {date}. Try `add_person` instead.")
 
 
 class PersonNotAssigned(Exception):
-    def __init__(self, person: person.Person, date: datetime.date) -> None:
+    def __init__(self, date: datetime.date, person_name: str) -> None:
         super().__init__(
-            f"{person.name} is not assigned to a chore on {date}. Try `add` instead."
+            f"{person_name} is not assigned to a chore on {date}. Try `add_person` instead."
         )
+
+
+class ReplacementPersonAlreadyAssigned(Exception):
+    def __init__(self, date: datetime.date, person_name: str) -> None:
+        super().__init__(
+            f"{person_name} is already assigned to a chore on {date}. Try `swap` instead."
+        )
+
+
+class NoValidAssignments(Exception):
+    def __init__(self, date: datetime.date) -> None:
+        super().__init__(f"Cannot find any valid assignments on {date}.")
 
 
 class Manager:
@@ -28,8 +39,11 @@ class Manager:
         self.name = self.configuration.name
         self.rota = printable.PrintableRota(self.name)
         self.notifier = notifier.Notifier(
-            self.configuration.clicksend_username, self.configuration.clicksend_api_key
+            self.configuration.clicksend_username,
+            self.configuration.clicksend_api_key,
+            self.configuration.message_template,
         )
+        self.check_and_heal()
 
     def print(self) -> None:
         self.rota.print()
@@ -38,15 +52,59 @@ class Manager:
         self.rota.pdf(output_file)
 
     def next_chore_date(self) -> datetime.date:
+        latest_rota_date = self.rota.latest_date
         next_dates_per_chore = [
-            chore.next(self.rota.latest_date) for chore in self.configuration.chores
+            c.next(latest_rota_date) for c in self.configuration.chores
         ]
         return min(next_dates_per_chore)
 
     def chores_on(self, date: datetime.date) -> Iterable[chore.Chore]:
         return set(c for c in self.configuration.chores if c.on(date))
 
-    def add(self, date: datetime.date, chore_name: str, person_name: str) -> None:
+    def find_assignment(
+        self, date: datetime.date, person_name: str
+    ) -> None | assignment.Assignment:
+        existing_row = self.rota[date]
+        if existing_row is None:
+            return None
+
+        person_assignment = [
+            a
+            for a in existing_row.assignments
+            if a.person.name == person_name or a.trainee.name == person_name
+        ]
+        if len(person_assignment) != 1:
+            return None
+
+        return person_assignment[0]
+
+    def remove_person(self, date: datetime.date, person_name: str) -> None:
+        existing_row = self.rota[date]
+        if existing_row is None:
+            raise DateNotFound(date)
+
+        person_assignment = self.find_assignment(date, person_name)
+        if person_assignment is None:
+            raise PersonNotAssigned(date, person_name)
+
+        new_row = existing_row
+        if person_assignment.trainee.name == person_name:
+            person_assignment.trainee.reduce_experience(person_assignment.chore)
+            person_assignment.trainee = None
+            new_row[person_assignment.chore] = person_assignment
+        else:
+            del new_row[person_assignment.chore]
+
+        if len(new_row.assignments) == 0:
+            del self.rota[date]
+        else:
+            self.rota[date] = new_row
+
+        self.rota.save()
+
+    def add_person(
+        self, date: datetime.date, chore_name: str, person_name: str
+    ) -> None:
         chore_to_do = chore.find_chore(chore_name, self.configuration.chores)
         person_to_assign = person.find_person(person_name, self.configuration.people)
         new_assignment = assignment.Assignment(date, chore_to_do, person_to_assign)
@@ -61,171 +119,253 @@ class Manager:
         self.rota[date] = new_row
         self.rota.save()
 
-    def replace(
-        self, date: datetime.date, person_name: str, replacement_name: str
-    ) -> None:
+    def swap(self, date: datetime.date, person1_name: str, person2_name: str) -> None:
         existing_row = self.rota[date]
         if existing_row is None:
             raise DateNotFound(date)
 
-        existing_assignment = [
-            a for a in existing_row.assignments if a.person.name == person_name
-        ]
-        if len(existing_assignment) != 1:
-            raise PersonNotAssigned(person, date)
+        person1_assignment = self.find_assignment(date, person1_name)
+        if person1_assignment is None:
+            raise PersonNotAssigned(date, person1_name)
 
-        chore_name = existing_assignment[0].chore.name
-        self.add(date, chore_name, replacement_name)
+        person2_assignment = self.find_assignment(date, person2_name)
+        if person2_assignment is None:
+            raise PersonNotAssigned(date, person2_name)
 
-    def try_to_generate_row(
-        self, assignments: Iterable[assignment.Assignment]
-    ) -> row.Row | None:
-        try:
-            return row.Row(assignments)
-        except Exception:
-            return None
+        person1_assigned_as_trainee = person1_assignment.trainee.name == person1_name
+        person2_assigned_as_trainee = person2_assignment.trainee.name == person2_name
 
-    def get_all_valid_assignments(
-        self, date: datetime.date
+        self.remove_person(date, person1_name)
+        self.remove_person(date, person2_name)
+
+        if not (person1_assigned_as_trainee):
+            self.add_person(date, person1_assignment.chore, person2_name)
+
+        if not (person2_assigned_as_trainee):
+            self.add_person(date, person2_assignment.chore, person1_name)
+
+    def replace(
+        self, date: datetime.date, person_name: str, replacement_name: str
+    ) -> None:
+        replacement_assignment = self.find_assignment(date, replacement_name)
+        if replacement_assignment is not None:
+            raise ReplacementPersonAlreadyAssigned(date, replacement_name)
+
+        self.remove_person(date, person_name)
+        self.add_person(date, replacement_name)
+
+    def check_and_heal(self):
+        # Remove all chores that no longer should be carried out and assigned people
+        # that are no longer available.
+        upcoming_rota = self.rota.rows_after(datetime.date.today(), True)
+        for row in upcoming_rota:
+            for a in row.assignments:
+                try:
+                    updated_chore = chore.find_chore(
+                        a.chore.name, self.configuration.chores
+                    )
+                except chore.ChoreNotFound:
+                    if len([_ for _ in row.assignments if _.chore != a.chore]) == 0:
+                        del self.rota[row.date]
+                    else:
+                        del self.rota[row.date][a.chore]
+
+                try:
+                    updated_person = person.find_person(
+                        a.person.name, self.configuration.people
+                    )
+                except person.PersonNotFound:
+                    if len([_ for _ in row.assignments if _.chore != a.chore]) == 0:
+                        del self.rota[row.date]
+                    else:
+                        del self.rota[row.date][a.chore]
+
+                updated_trainee = None
+                if a.trainee is not None:
+                    try:
+                        updated_trainee = person.find_person(
+                            a.trainee.name, self.configuration.people
+                        )
+                    except person.PersonNotFound:
+                        updated_trainee = None
+
+                if (
+                    updated_chore.on(a.date) == False
+                    or updated_person.can_do(a.chore, a.date) == False
+                ):
+                    if len([_ for _ in row.assignments if _.chore != a.chore]) == 0:
+                        del self.rota[row.date]
+                    else:
+                        del self.rota[row.date][a.chore]
+                else:
+                    if (
+                        updated_trainee is not None
+                        and updated_trainee.can_be_trained(a.chore, a.date) == False
+                    ):
+                        a.trainee.reduce_experience(a.chore)
+                        a.trainee = None
+                        a.trainee = None
+                        self.rota[row.date][a.chore] = a
+
+        self.fill()
+
+    def all_independently_valid_assignments(
+        self, date: datetime.date, chore_to_assign: chore.Chore
     ) -> Iterable[assignment.Assignment]:
-        # TODO: This could probably be improved in efficiency.
-        chores_to_assign = self.chores_on(date)
-        all_possible_assignments_with_trainees = [
-            assignment.Assignment(date, chore, person, trainee)
-            for person in self.configuration.people
-            for trainee in self.configuration.people
-            for chore in chores_to_assign
-            if (person.can_do(chore, date) and trainee.can_be_trained(chore, date))
+        valid_people = [
+            p for p in self.configuration.people if p.can_do(chore_to_assign, date)
         ]
-        all_possible_assignments_without_trainees = [
-            assignment.Assignment(date, chore, person)
-            for person in self.configuration.people
-            for chore in chores_to_assign
-            if person.can_do(chore, date)
+        valid_trainees = [None] + [
+            t
+            for t in self.configuration.people
+            if t.can_be_trained(chore_to_assign, date)
         ]
-        all_possible_assignments = (
-            all_possible_assignments_with_trainees
-            + all_possible_assignments_without_trainees
-        )
+        valid_assignments = []
+        for p, t in itertools.product(valid_people, valid_trainees):
+            new_assignment = assignment.Assignment(date, chore_to_assign, p, t)
+            valid_assignments.append(new_assignment)
 
-        all_assignment_combinations = itertools.combinations(
-            all_possible_assignments, len(chores_to_assign)
-        )
-        checked_assignment_combinations = [
-            self.try_to_generate_row(assignments)
-            for assignments in all_assignment_combinations
-        ]
-        all_valid_rows = list(
-            set(row for row in checked_assignment_combinations if row is not None)
-        )
-        return all_valid_rows
+        return valid_assignments
 
-    def get_row_weight(self, date: datetime.date, row: row.Row) -> float:
-        previous_rota = self.rota.rows_prior(date)
-        previous_rota.reverse()
+    def row_weight(self, row_to_check: row.Row) -> float:
+        date = row_to_check.date
+        previous_rows = self.rota.rows_prior(date)
+        previous_rows.reverse()
+        max_look_back = 10
+        previous_rows = [r for i, r in enumerate(previous_rows) if i < max_look_back]
+
         # For each person, working from most recent row to least recent row, we
         # will subtract the following from the weight.
-        # 1st - 1/2 if assignments match, 1/4 if person is assigned any chore
-        # 2nd - 1/4 if assignments match, 1/8 if person is assigned any chore
+        # latest:        1/2 if chore matches, 1/4 if person is assigned any chore
+        # second latest: 1/4 if chore matches, 1/8 if person is assigned any chore
         # etc.
-        # Therefore the most this weight could ever be reduced by is 1/2 + 1/4
-        # + 1/8 + ... = sum to infinity of 1/(n^2) - 1 = ((pi^2) / 6) - 1.
-        weight = (((math.pi**2) / 6) - 1) * len(self.configuration.chores)
+        # Therefore the most this weight could ever be reduced by is
+        #   1/2 + 1/4 + 1/8 + ... + 1/(2 ^ max_look_back)
+        # = ((2 ^ max_look_back) - 1) / 2 ^ max_look_back
+        # = very close to but never > 1
+        weight = len(self.configuration.chores)
 
-        for assignment in row.assignments:
+        for assignment_to_check in row_to_check.assignments:
             n = 0
-            for comparison_row in previous_rota:
-                if n >= 10:
-                    break
-
-                same_chore = [
-                    a for a in comparison_row.assignments if a.chore == assignment.chore
+            for comparison_row in previous_rows:
+                same_chore_assignment = [
+                    a
+                    for a in comparison_row.assignments
+                    if a.chore == assignment_to_check.chore
                 ]
                 # Only increment n if the chore is actually being done on this
                 # date.
-                if len(same_chore) > 0:
-                    n += 1
-                    if assignment.person == same_chore[0].person:
-                        # Subtract the bigger value when the chore has been
-                        # assigned to this person on that date.
-                        weight -= 1 / (2**n)
-                    else:
-                        not_same_chore = [
-                            a
-                            for a in comparison_row.assignments
-                            if a.chore != assignment.chore
-                        ]
-                        for a in not_same_chore:
-                            # Otherwise, subtract a smaller value if the person
-                            # has been assigned any chore on that date.
-                            if assignment.person == a.person:
-                                weight -= 1 / ((2**n) * 2)
+                if len(same_chore_assignment) == 0:
+                    continue
+
+                n += 1
+                if assignment_to_check.person == same_chore_assignment[0].person:
+                    weight -= 1 / (2**n)
+                else:
+                    not_same_chore = [
+                        a
+                        for a in comparison_row.assignments
+                        if a.chore != assignment_to_check.chore
+                    ]
+                    for a in not_same_chore:
+                        # Otherwise, subtract a smaller value if the person has been
+                        # assigned any chore on that date.
+                        if assignment_to_check.person == a.person:
+                            weight -= 1 / ((2**n) * 2)
+                            break
 
         return weight
 
-    def assign(self, date: datetime.date) -> None:
-        choices = self.get_all_valid_assignments(date)
-        weights = [self.get_row_weight(date, row) for row in choices]
-        max_weight = max(weights)
-        index_with_max = [i for i, w in enumerate(weights) if w == max_weight]
-        best_choices = [choices[i] for i in index_with_max]
-        row = random.choice(best_choices)
-        self.rota.add_row(row)
+    def assign_chores_on(self, date: datetime.date) -> None:
+        chores_on_date = self.chores_on(date)
+        if len(chores_on_date) == 0:
+            return
 
-        for assignment in row.assignments:
-            if assignment.trainee is not None:
-                assignment.trainee.add_to_experience(assignment.chore)
+        existing_row = self.rota[date]
+        existing_assignments = []
+        if existing_row is not None:
+            existing_assignments = [existing_row[c] for c in chores_on_date]
+
+        existing_assignments = [a for a in existing_assignments if a is not None]
+        existing_chores = [a.chore for a in existing_assignments]
+        chores_to_assign = [c for c in chores_on_date if c not in existing_chores]
+        if len(chores_to_assign) == 0:
+            return
+
+        for c in chores_to_assign:
+            unchanged_assignments = [a for a in existing_assignments if a.chore != c]
+            choices = self.all_independently_valid_assignments(date, c)
+            valid_rows = []
+            for choice in choices:
+                try:
+                    new_row = row.Row(unchanged_assignments + [choice])
+                except Exception:
+                    pass
+                else:
+                    valid_rows.append(new_row)
+
+            if len(valid_rows) == 0:
+                if len(existing_assignments) > 0:
+                    del self.rota[date]
+                    self.assign_chores_on(date)
+                else:
+                    raise NoValidAssignments(date)
+
+            weights = [self.row_weight(r) for r in valid_rows]
+            max_weight = max(weights)
+            index_with_max = [i for i, w in enumerate(weights) if w == max_weight]
+            best_rows = [valid_rows[i] for i in index_with_max]
+            best_row = random.choice(best_rows)
+
+            for a in best_row.assignments:
+                if a.trainee is not None:
+                    a.trainee.add_to_experience(c)
+
+            self.rota.add_row(best_row)
 
     def fill(self) -> None:
-        current_date = datetime.datetime.today().date()
-        while (
-            self.rota.latest_date - current_date
-        ).days <= self.configuration.lookahead_days:
-            self.assign(self.next_chore_date())
+        today = datetime.date.today()
+        all_lookahead_days = [
+            today + datetime.timedelta(days=days_to_add)
+            for days_to_add in range(self.configuration.lookahead_days + 1)
+        ]
+        for r in self.rota.rows_after(today, True):
+            if r.date not in all_lookahead_days:
+                all_lookahead_days.append(row.date)
+
+        all_lookahead_days.sort()
+        for date in all_lookahead_days:
+            self.assign_chores_on(date)
 
         self.rota.save()
 
     def notify(self) -> None:
-        today = datetime.datetime.today().date()
+        today = datetime.date.today()
 
-        for chore in self.configuration.chores:
-            if not (isinstance(chore.notify, bool)) and chore.notify == False:
-                delta = datetime.timedelta(days=chore.notify)
-                for row in self.rota.rows:
-                    if row.date - delta == today:
-                        for assignment in row.assignments:
-                            if assignment.notification_sent == False:
-                                self.notifier.add_to_queue(
-                                    self.configuration.message_template,
-                                    assignment.person,
-                                    row.date,
-                                    assignment.chore,
-                                    str(assignment),
-                                )
-                                if assignment.trainee is not None:
-                                    self.notifier.add_to_queue(
-                                        self.configuration.message_template,
-                                        assignment.trainee,
-                                        row.date,
-                                        assignment.chore,
-                                        str(assignment),
-                                    )
+        for c in self.configuration.chores:
+            if c.notify == False:
+                continue
 
-                                try:
-                                    retry_call(
-                                        notifier_send,
-                                        fargs=[self.notifier],
-                                        exceptions=ApiException,
-                                        tries=3,
-                                        delay=5,
-                                        backoff=5,
-                                    )
-                                    assignment.mark_notified()
-                                except Exception as e:
-                                    raise e
-
-        self.rota.save()
+            notification_cut_off = today + datetime.timedelta(days=c.notify)
+            for r in self.rota.rows_prior(notification_cut_off, True):
+                a = r[c]
+                if a is not None and a.notification_sent == False:
+                    self.notifier.message_from_assignment(a)
+                    try:
+                        retry_call(
+                            _notifier_send,
+                            fargs=[self.notifier],
+                            exceptions=ApiException,
+                            tries=3,
+                            delay=5,
+                            backoff=5,
+                        )
+                    except Exception as e:
+                        raise e
+                    else:
+                        a.mark_notified()
+                        self.rota.save()
 
 
-def notifier_send(notifier: notifier.Notifier) -> None:
+def _notifier_send(notifier: notifier.Notifier) -> None:
     notifier.send()
