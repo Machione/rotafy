@@ -1,10 +1,14 @@
 import datetime
+import logging
 import pkg_resources
 import os
 import pickle
 import copy
 from typing import Iterable
 from rotafy.rota import row
+
+
+logger = logging.getLogger(__name__)
 
 
 class MismatchedDates(Exception):
@@ -56,6 +60,9 @@ class Rota:
         self.rows.sort(key=lambda r: r.date)
 
     def add_row(self, new_row: row.Row) -> None:
+        new_row_s = [f"{a.chore.name}: {str(a)}" for a in new_row.assignments]
+        logger.info(f"Adding row {', '.join(new_row_s)} to {new_row.date}")
+
         all_row_dates = set(r.date for r in self.rows)
         if new_row.date in all_row_dates:
             self.delete_row(new_row.date)
@@ -64,6 +71,7 @@ class Rota:
         self.sort()
 
     def delete_row(self, date: datetime.date) -> None:
+        logger.info(f"Deleting row from {date}")
         self.rows = [row for row in self.rows if row.date != date]
 
     def rows_prior(self, date: datetime.date, inc: bool = False) -> Iterable[row.Row]:

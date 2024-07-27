@@ -1,8 +1,12 @@
 import clicksend_client
+import logging
 import datetime
 import jinja2
 from rotafy.config import person
 from rotafy.rota import assignment, printable
+
+
+logger = logging.getLogger(__name__)
 
 
 class Notifier:
@@ -44,7 +48,7 @@ class Notifier:
             assignment=assignment_msg,
         )
 
-        print(message)
+        logger.info(f"Adding message '{message}' to {recipient.telephone} to queue")
         sms = clicksend_client.SmsMessage(
             source="Rotafy", body=message, to=recipient.telephone
         )
@@ -64,4 +68,5 @@ class Notifier:
         except Exception as e:
             raise e
         else:
+            logger.info(f"All {len(self.queue)} messages in queue sent")
             self.queue = []

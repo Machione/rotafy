@@ -1,4 +1,5 @@
 import datetime
+import logging
 import itertools
 from typing import Iterable
 import random
@@ -7,6 +8,9 @@ from clicksend_client.rest import ApiException
 from rotafy.config import config, chore, person
 from rotafy.rota import printable, assignment, row
 from rotafy.api import notifier
+
+
+logger = logging.getLogger(__name__)
 
 
 class DateNotFound(Exception):
@@ -37,6 +41,10 @@ class Manager:
     def __init__(self, toml_file_path: str) -> None:
         self.configuration = config.Config(toml_file_path)
         self.name = self.configuration.name
+
+        logger.info(f"Creating rotafy.Manager named {self.name}")
+        logger.info(f"Loaded configuration file from {toml_file_path}")
+
         self.rota = printable.PrintableRota(self.name)
         self.notifier = notifier.Notifier(
             self.configuration.clicksend_username,
@@ -52,13 +60,16 @@ class Manager:
         self.rota.pdf(output_file)
 
     def chores_on(self, date: datetime.date) -> Iterable[chore.Chore]:
-        return set(c for c in self.configuration.chores if c.on(date))
+        found_chores = set(c for c in self.configuration.chores if c.on(date))
+        logger.info(f"Found chores on {date}: {[c.name for c in found_chores]}")
+        return found_chores
 
     def find_assignment(
         self, date: datetime.date, person_name: str
     ) -> None | assignment.Assignment:
         existing_row = self.rota[date]
         if existing_row is None:
+            logger.info(f"No existing row on {date}")
             return None
 
         person_assignment = [
@@ -67,8 +78,10 @@ class Manager:
             if a.person.name == person_name or a.trainee.name == person_name
         ]
         if len(person_assignment) != 1:
+            logger.info(f"No existing assignment for {person_name} on {date}")
             return None
 
+        logger.info(f"Found existing assignment for {person_name} on {date}")
         return person_assignment[0]
 
     def remove_person(self, date: datetime.date, person_name: str) -> None:
@@ -79,6 +92,10 @@ class Manager:
         person_assignment = self.find_assignment(date, person_name)
         if person_assignment is None:
             raise PersonNotAssigned(date, person_name)
+
+        logger.info(
+            f"Removing {person_name} from {person_assignment.chore.name} on {date}"
+        )
 
         new_row = existing_row
         if person_assignment.trainee.name == person_name:
@@ -101,6 +118,8 @@ class Manager:
         chore_to_do = chore.find_chore(chore_name, self.configuration.chores)
         person_to_assign = person.find_person(person_name, self.configuration.people)
         new_assignment = assignment.Assignment(date, chore_to_do, person_to_assign)
+
+        logger.info(f"Adding {person_name} to {chore_name} on {date}")
 
         existing_row = self.rota[date]
         if existing_row is None:
@@ -125,6 +144,8 @@ class Manager:
         if person2_assignment is None:
             raise PersonNotAssigned(date, person2_name)
 
+        logger.info(f"Swapping {person1_name} and {person2_name} on {date}")
+
         person1_assigned_as_trainee = person1_assignment.trainee.name == person1_name
         person2_assigned_as_trainee = person2_assignment.trainee.name == person2_name
 
@@ -144,6 +165,8 @@ class Manager:
         if replacement_assignment is not None:
             raise ReplacementPersonAlreadyAssigned(date, replacement_name)
 
+        logger.info(f"Replacing {person_name} with {replacement_name} on {date}")
+
         self.remove_person(date, person_name)
         self.add_person(date, replacement_name)
 
@@ -158,6 +181,9 @@ class Manager:
                         a.chore.name, self.configuration.chores
                     )
                 except chore.ChoreNotFound:
+                    logger.info(
+                        f"Removing {a.chore.name} from {a.date} - no longer configured"
+                    )
                     if len([_ for _ in row.assignments if _.chore != a.chore]) == 0:
                         del self.rota[row.date]
                     else:
@@ -168,6 +194,9 @@ class Manager:
                         a.person.name, self.configuration.people
                     )
                 except person.PersonNotFound:
+                    logger.info(
+                        f"Removing {a.person.name} from {a.date} - no longer configured"
+                    )
                     if len([_ for _ in row.assignments if _.chore != a.chore]) == 0:
                         del self.rota[row.date]
                     else:
@@ -180,12 +209,25 @@ class Manager:
                             a.trainee.name, self.configuration.people
                         )
                     except person.PersonNotFound:
+                        logger.info(
+                            f"Removing {a.trainee.name} as trainee from {a.date} - no longer configured"
+                        )
+                        a.trainee.reduce_experience(a.chore)
+                        a.trainee = None
+                        self.rota[row.date][a.chore] = a
                         updated_trainee = None
 
                 if (
                     updated_chore.on(a.date) == False
                     or updated_person.can_do(a.chore, a.date) == False
                 ):
+                    if updated_chore.on(a.date) == False:
+                        logger.info(f"Removing {a.chore.name} - no longer on {a.date}")
+                    else:
+                        logger.info(
+                            f"Removing {a.person.name} - no longer available on {a.date}"
+                        )
+
                     if len([_ for _ in row.assignments if _.chore != a.chore]) == 0:
                         del self.rota[row.date]
                     else:
@@ -195,8 +237,10 @@ class Manager:
                         updated_trainee is not None
                         and updated_trainee.can_be_trained(a.chore, a.date) == False
                     ):
+                        logger.info(
+                            f"Removing {a.trainee.name} - no longer can be trained on {a.date}"
+                        )
                         a.trainee.reduce_experience(a.chore)
-                        a.trainee = None
                         a.trainee = None
                         self.rota[row.date][a.chore] = a
 
@@ -218,6 +262,9 @@ class Manager:
             new_assignment = assignment.Assignment(date, chore_to_assign, p, t)
             valid_assignments.append(new_assignment)
 
+        logging.info(
+            f"Found valid assignments for {chore_to_assign.name} on {date}: {[str(a) for a in valid_assignments]}"
+        )
         return valid_assignments
 
     def row_weight(self, row_to_check: row.Row) -> float:
@@ -267,11 +314,14 @@ class Manager:
                             weight -= 1 / ((2**n) * 2)
                             break
 
+        row_s = [f"{a.chore.name}: {str(a)}" for a in row_to_check.assignments]
+        logger.info(f"Weight of {weight} calculated for {', '.join(row_s)}")
         return weight
 
     def assign_chores_on(self, date: datetime.date) -> None:
         chores_on_date = self.chores_on(date)
         if len(chores_on_date) == 0:
+            logger.info(f"No chores on {date} to assign")
             return
 
         existing_row = self.rota[date]
@@ -281,7 +331,10 @@ class Manager:
 
         existing_assignments = [a for a in existing_assignments if a is not None]
         existing_chores = [a.chore for a in existing_assignments]
+        logger.info(f"Existing chores already assigned on {date}: {existing_chores}")
+
         chores_to_assign = [c for c in chores_on_date if c not in existing_chores]
+        logger.info(f"New assignments required on {date} for {chores_to_assign}")
         if len(chores_to_assign) == 0:
             return
 
@@ -298,7 +351,9 @@ class Manager:
                     valid_rows.append(new_row)
 
             if len(valid_rows) == 0:
+                logger.info(f"No valid combination of assignments found for {date}")
                 if len(existing_assignments) > 0:
+                    logger.info(f"Re-evaluating all chores due on {date}")
                     del self.rota[date]
                     self.assign_chores_on(date)
                 else:
@@ -326,6 +381,7 @@ class Manager:
             if r.date not in all_lookahead_days:
                 all_lookahead_days.append(row.date)
 
+        logger.info(f"Attempting to fill assignments for {all_lookahead_days}")
         all_lookahead_days.sort()
         for date in all_lookahead_days:
             self.assign_chores_on(date)
