@@ -162,3 +162,4 @@ cython_debug/
 rotas/
 .vscode/
 *.pdf
+.DS_Store
