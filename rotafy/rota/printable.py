@@ -10,6 +10,9 @@ class PrintableRota(rota.Rota):
     def __init__(self, name: str) -> None:
         super().__init__(name)
 
+    def __str__(self) -> str:
+        return self.dataframe.to_string()
+
     def _draw_table_figure(self) -> matplotlib.figure.Figure:
         df_separate = self.dataframe.copy()
         width = len(df_separate.columns)
@@ -46,24 +49,19 @@ class PrintableRota(rota.Rota):
         return fig
 
     def pdf(self, output_file: str) -> None:
-        with PdfPages(output_file) as pdf:
-            fig = self._draw_table_figure()
-            if fig is not None:
+        fig = self._draw_table_figure()
+        if fig is not None:
+            with PdfPages(output_file) as pdf:
                 pdf.savefig(fig, bbox_inches="tight")
 
             plt.close()
-
-    def __str__(self) -> str:
-        return self.dataframe.to_string()
 
     def print(self) -> None:
         print(self.__str__())
 
     @property
     def dataframe(self) -> pandas.DataFrame:
-        all_chores = set(
-            assignment.chore for row in self.rows for assignment in row.assignments
-        )
+        all_chores = set(a.chore for r in self.rows for a in r.assignments)
         ordered_chores = list(all_chores)
         ordered_chores.sort(key=lambda c: c.ordinal)
         ordered_chore_names = [chore.name for chore in ordered_chores]
@@ -71,21 +69,21 @@ class PrintableRota(rota.Rota):
         self.sort()
 
         data = {}
-        for row in self.rows:
+        for r in self.rows:
             row_data = []
-            for chore in ordered_chores:
-                assigned = row[chore]
-                if assigned is None:
+            for c in ordered_chores:
+                a = r[c]
+                if a is None:
                     row_data.append(None)
                 else:
-                    row_data.append(str(assigned))
+                    row_data.append(str(a))
 
-            data[row.date] = row_data
+            data[r.date] = row_data
 
         df = pandas.DataFrame.from_dict(
             data, orient="index", columns=ordered_chore_names
         )
-        today = datetime.datetime.today().date()
+        today = datetime.date.today()
         min_ts = pandas.Timestamp(today).date()
         df = df[df.index >= min_ts]
         df.index = df.index.map(human_readable_date)
