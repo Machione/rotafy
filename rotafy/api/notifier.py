@@ -1,60 +1,67 @@
 import clicksend_client
 import datetime
 from jinja2 import Environment, BaseLoader
-from rotafy.config import person, chore
+from rotafy.config import person
+from rotafy.rota import assignment, printable
 
 
 class Notifier:
-    def __init__(self, clicksend_username: str, clicksend_api_key: str) -> None:
+    def __init__(
+        self, clicksend_username: str, clicksend_api_key: str, message_template: str
+    ) -> None:
         clicksend_config = clicksend_client.Configuration()
         clicksend_config.username = clicksend_username
         clicksend_config.password = clicksend_api_key
         configured_client = clicksend_client.ApiClient(clicksend_config)
         self.clicksend_api = clicksend_client.SMSApi(configured_client)
 
+        jinja_env = Environment(loader=BaseLoader())
+        self.template = jinja_env.from_string(message_template)
+
         self.queue = []
 
-    def _ordinal(self, n: int) -> str:
-        return f"{n:d}{'tsnrhtdd'[(n//10%10!=1)*(n%10<4)*n%10::4]}"
-
     def format_upcoming_date(self, date: datetime.date) -> str:
-        date_ordinal = self._ordinal(date.day)
+        date_ordinal = printable.ordinal(date.day)
 
-        today = datetime.datetime.today().date()
+        today = datetime.date.today()
         days_to_date = (date - today).days
         if days_to_date < 7:
             day_of_week = date.strftime("%A")
             return f"{day_of_week} ({date_ordinal})"
 
-        return date.strftime(f"%a {date_ordinal} %b")
+        return printable.human_readable_date(date, True, False)
 
     def add_to_queue(
-        self,
-        message_template: str,
-        recipient: person.Person,
-        date: datetime.date,
-        chore: chore.Chore,
-        assignment: str,
+        self, recipient: person.Person, assignment_to_notify: assignment.Assignment
     ) -> None:
+        assignment_str = str(assignment_to_notify)
+        assignment_msg = assignment_str.replace(recipient.name, "you")
 
-        assignment = assignment.replace(recipient.name, "you")
-
-        jinja_env = Environment(loader=BaseLoader())
-        template = jinja_env.from_string(message_template)
-        message = template.render(
+        message = self.template.render(
             recipient=recipient.name,
-            date=self.format_upcoming_date(date),
-            chore=chore.name,
-            assignment=assignment,
+            date=self.format_upcoming_date(assignment_to_notify.date),
+            chore=assignment_to_notify.chore.name,
+            assignment=assignment_msg,
         )
 
         print(message)
-
         sms = clicksend_client.SmsMessage(
             source="Rotafy", body=message, to=recipient.telephone
         )
         self.queue.append(sms)
 
+    def message_from_assignment(
+        self, assignment_to_notify: assignment.Assignment
+    ) -> None:
+        self.add_to_queue(assignment_to_notify.person, assignment_to_notify)
+        if assignment_to_notify.trainee is not None:
+            self.add_to_queue(assignment_to_notify.trainee, assignment_to_notify)
+
     def send(self) -> None:
         messages_to_send = clicksend_client.SmsMessageCollection(messages=[self.queue])
-        self.clicksend_api.sms_send_post(messages_to_send)
+        try:
+            self.clicksend_api.sms_send_post(messages_to_send)
+        except Exception as e:
+            raise e
+        else:
+            self.queue = []
