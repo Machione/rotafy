@@ -3,17 +3,17 @@ from rotafy.config import chore, person
 
 
 class NotQualified(Exception):
-    def __init(self, person: person.Person, chore: chore.Chore) -> None:
+    def __init__(self, person: person.Person, chore: chore.Chore) -> None:
         super().__init__(f"{person.name} is not qualified to do {chore.name}.")
 
 
 class PersonUnavailable(Exception):
-    def __init(self, person: person.Person, date: datetime.date) -> None:
+    def __init__(self, person: person.Person, date: datetime.date) -> None:
         super().__init__(f"{person.name} is not available on {date}.")
 
 
 class ChoreNotScheduled(Exception):
-    def __init(self, chore: chore.Chore, date: datetime.date) -> None:
+    def __init__(self, chore: chore.Chore, date: datetime.date) -> None:
         super().__init__(f"{chore} is not scheduled to happen on {date}.")
 
 
