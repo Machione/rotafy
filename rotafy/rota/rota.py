@@ -74,6 +74,14 @@ class Rota:
 
         return [row for row in self.rows if row.date < date]
 
+    def rows_after(self, date: datetime.date, inc: bool = False) -> Iterable[row.Row]:
+        self.sort()
+
+        if inc:
+            return [row for row in self.rows if row.date >= date]
+
+        return [row for row in self.rows if row.date > date]
+
     @property
     def latest_date(self) -> datetime.date:
         if len(self.rows) == 0:

@@ -180,6 +180,37 @@ def test_rows_prior(test_rota, loadable_rota):
         assert r.date <= mid_date
 
 
+def test_rows_after(test_rota, loadable_rota):
+    today = datetime.date.today()
+    assert len(test_rota.rows_after(today)) == 0
+
+    first_date = min(x.date for x in loadable_rota.rows)
+    assert len(loadable_rota.rows_after(first_date)) == len(loadable_rota.rows) - 1
+    assert len(loadable_rota.rows_after(first_date, True)) == len(loadable_rota.rows)
+
+    last_date = max(x.date for x in loadable_rota.rows)
+    assert len(loadable_rota.rows_after(last_date)) == 0
+    assert len(loadable_rota.rows_after(last_date, True)) == 1
+    assert loadable_rota.rows_after(last_date, True)[0].date == last_date
+
+    assert len(loadable_rota.rows_after(today)) == 0
+    assert len(loadable_rota.rows_after(today, True)) == 0
+
+    mid_date_index = round(len(loadable_rota.rows) / 2)
+    mid_date = loadable_rota.rows[mid_date_index].date
+    rows_after_noninc = loadable_rota.rows_after(mid_date)
+    assert len(rows_after_noninc) > 0
+    assert len(rows_after_noninc) < len(loadable_rota.rows)
+    for r in rows_after_noninc:
+        assert r.date > mid_date
+
+    rows_after_inc = loadable_rota.rows_after(mid_date, True)
+    assert mid_date in [r.date for r in rows_after_inc]
+    assert len(rows_after_inc) == len(rows_after_noninc) + 1
+    for r in rows_after_inc:
+        assert r.date >= mid_date
+
+
 def test_latest_date(test_rota, loadable_rota):
     assert test_rota.latest_date == datetime.date.today()
     assert loadable_rota.latest_date == max(r.date for r in loadable_rota.rows)
