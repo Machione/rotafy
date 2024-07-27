@@ -1,0 +1,41 @@
+name = "basic"
+
+lookahead_days = 25
+default_number_of_training_sessions = 1
+default_number_of_shadowing_sessions = 1
+default_notification_days = 1
+
+clicksend_username = "test1@test.com"
+clicksend_api_key = "D83DED51-9E35-4D42-9BB9-0E34B7CA85AE"
+message = "Hi {{recipient}}! This is an automated reminder. On {{date}}, {{chore}} will be handled by {{assignment}}. Post in our WhatsApp group if you need a replacement."
+
+[[chore]]
+name = "Dishes"
+recurrence = "Daily"
+notify = true
+
+[[chore]]
+name = "Hoovering"
+recurrence = "Saturdays"
+notify = 3
+exceptions = [2024-06-01, 2024-06-03]
+required_shadowing_sessions = 2
+
+
+[[person]]
+name = "Ryan"
+telephone = "+61411111111"
+skills = ["ALL"]
+
+[[person]]
+name = "Mark"
+telephone = "+61422222222"
+skills = ["Dishes"]
+unavailable = [2024-06-01]
+training = ["Hoovering"]
+
+[[person]]
+name = "Matthew"
+telephone = "+61433333333"
+skills = ["Hoovering"]
+training = ["Dishes"]
