@@ -1,6 +1,6 @@
 import clicksend_client
 import datetime
-from jinja2 import Environment, BaseLoader
+import jinja2
 from rotafy.config import person
 from rotafy.rota import assignment, printable
 
@@ -15,7 +15,7 @@ class Notifier:
         configured_client = clicksend_client.ApiClient(clicksend_config)
         self.clicksend_api = clicksend_client.SMSApi(configured_client)
 
-        jinja_env = Environment(loader=BaseLoader())
+        jinja_env = jinja2.Environment(loader=jinja2.BaseLoader())
         self.template = jinja_env.from_string(message_template)
 
         self.queue = []
