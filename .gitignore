@@ -163,3 +163,4 @@ rotas/
 .vscode/
 *.pdf
 .DS_Store
+*.pkl
