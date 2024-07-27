@@ -21,11 +21,15 @@ class Config:
 
         self.chores = set()
         for ordinal, raw_chore in enumerate(self.raw.get("chore")):
+            this_chore_notify = raw_chore.get("notify", False)
+            if isinstance(this_chore_notify, bool) and this_chore_notify == True:
+                this_chore_notify = self.raw.get("default_notification_days", 1)
+
             this_chore = chore.Chore(
                 raw_chore.get("name"),
                 ordinal,
                 raw_chore.get("recurrence"),
-                raw_chore.get("notify", False),
+                this_chore_notify,
                 raw_chore.get(
                     "required_training_sessions",
                     self.raw.get("default_number_of_training_sessions", 1),

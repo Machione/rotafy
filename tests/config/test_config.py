@@ -13,6 +13,7 @@ data = {
     "message": "{{recipient}}, pleas do {{chore}} on {{date}}.",
     "default_number_of_training_sessions": 2,
     "default_number_of_shadowing_sessions": 1,
+    "default_notification_days": 5,
     "chore": [
         {"name": "test_chore", "recurrence": "every day", "notify": False},
         {
@@ -23,6 +24,7 @@ data = {
             "required_shadowing_sessions": 5,
             "exceptions": [datetime.date.today()],
         },
+        {"name": "one_more_chore", "recurrence": "every day", "notify": True},
     ],
     "person": [
         {
@@ -100,7 +102,13 @@ def init_tester(cfg, raw_data):
         assert c._raw_recurrence == raw_chore["recurrence"]
 
         if "notify" in raw_chore.keys():
-            assert c.notify == raw_chore["notify"]
+            if isinstance(raw_chore["notify"], bool) and raw_chore["notify"] == True:
+                if "default_notification_days" in raw_data.keys():
+                    assert c.notify == raw_data["default_notification_days"]
+                else:
+                    assert c.notify == 1
+            else:
+                assert c.notify == raw_chore["notify"]
 
         if "required_training_sessions" in raw_chore.keys():
             assert c.num_training_sessions == raw_chore["required_training_sessions"]
