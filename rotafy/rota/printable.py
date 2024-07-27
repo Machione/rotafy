@@ -10,27 +10,6 @@ class PrintableRota(rota.Rota):
     def __init__(self, name: str) -> None:
         super().__init__(name)
 
-    def _ordinal(self, n: int) -> str:
-        return f"{n:d}{'tsnrhtdd'[(n//10%10!=1)*(n%10<4)*n%10::4]}"
-
-    def _human_readable_date(
-        self,
-        date: datetime.date,
-        include_day_of_week: bool = False,
-        include_year: bool = True,
-    ) -> str:
-        date_ordinal = self._ordinal(date.day)
-
-        format = f"{date_ordinal} %B"
-        if include_day_of_week:
-            format = "%A " + format
-
-        if include_year:
-            format += " %Y"
-
-        human_readable = date.strftime(format)
-        return human_readable
-
     def _draw_table_figure(self) -> matplotlib.figure.Figure:
         df_separate = self.dataframe.copy()
         width = len(df_separate.columns)
@@ -88,6 +67,7 @@ class PrintableRota(rota.Rota):
         ordered_chores = list(all_chores)
         ordered_chores.sort(key=lambda c: c.ordinal)
         ordered_chore_names = [chore.name for chore in ordered_chores]
+
         self.sort()
 
         data = {}
@@ -108,6 +88,28 @@ class PrintableRota(rota.Rota):
         today = datetime.datetime.today().date()
         min_ts = pandas.Timestamp(today).date()
         df = df[df.index >= min_ts]
-        df.index = df.index.map(self._human_readable_date)
+        df.index = df.index.map(human_readable_date)
         df.fillna("-", inplace=True)
         return df
+
+
+def ordinal(n: int) -> str:
+    return f"{n:d}{'tsnrhtdd'[(n//10%10!=1)*(n%10<4)*n%10::4]}"
+
+
+def human_readable_date(
+    date: datetime.date,
+    include_day_of_week: bool = False,
+    include_year: bool = True,
+) -> str:
+    date_ordinal = ordinal(date.day)
+
+    format = f"{date_ordinal} %B"
+    if include_day_of_week:
+        format = "%A " + format
+
+    if include_year:
+        format += " %Y"
+
+    human_readable = date.strftime(format)
+    return human_readable
