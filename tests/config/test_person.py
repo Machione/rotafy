@@ -157,6 +157,39 @@ def test_add_to_experience(test_person, new_chore):
     assert new_chore not in test_person.skills
 
 
+def test_reduce_experience(test_person, new_chore):
+    # The chores require 2 training sessions (shadowing someone else) and 1
+    # shadowing session (shadowed by someone else)
+    training_chore = all_chores[-1]
+
+    assert test_person.experience[training_chore] == 0
+
+    # Experience should never fall below zero
+    test_person.reduce_experience(training_chore)
+    assert test_person.experience[training_chore] == 0
+
+    test_person.add_to_experience(training_chore)
+    assert test_person.experience[training_chore] == 1
+    test_person.reduce_experience(training_chore)
+    assert test_person.experience[training_chore] == 0
+
+    # Completed training can be revoked
+    while training_chore not in test_person.skills:
+        test_person.add_to_experience(training_chore)
+
+    test_person.reduce_experience(training_chore)
+    assert training_chore not in test_person.skills
+    assert test_person.experience[training_chore] == 2
+
+    # Reducing a brand new chore should be allowed
+    assert new_chore not in test_person.experience.keys()
+    assert new_chore not in test_person.skills
+
+    test_person.reduce_experience(new_chore)
+    assert test_person.experience[new_chore] == 0
+    assert new_chore not in test_person.skills
+
+
 def test_is_shadowing(test_person, new_chore):
     # The chores require 2 sessions shadowing someone else.
     training_chore = all_chores[-1]

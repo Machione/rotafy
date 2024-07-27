@@ -75,6 +75,19 @@ class Person:
             del self.experience[chore]
             self.skills.add(chore)
 
+    def reduce_experience(self, chore: chore.Chore) -> None:
+        if chore in self.skills:
+            qualification_threshold = (
+                chore.num_training_sessions + chore.num_shadowing_sessions
+            )
+            self.experience[chore] = qualification_threshold
+            self.skills = set(s for s in self.skills if s != chore)
+
+        if chore not in self.experience.keys():
+            self.experience[chore] = 0
+
+        self.experience[chore] = max(0, self.experience[chore] - 1)
+
     def is_shadowing(self, chore: chore.Chore) -> bool:
         if chore not in self.experience.keys():
             return False
