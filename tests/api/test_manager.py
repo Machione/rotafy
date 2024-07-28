@@ -18,6 +18,10 @@ def test_chores_on():
     raise NotImplementedError()
 
 
+def update_experience():
+    raise NotImplementedError()
+
+
 def test_find_assignment():
     raise NotImplementedError()
 

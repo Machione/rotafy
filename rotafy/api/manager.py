@@ -51,6 +51,7 @@ class Manager:
             self.configuration.clicksend_api_key,
             self.configuration.message_template,
         )
+        self.update_experience()
         self.check_and_heal()
 
     def print(self) -> None:
@@ -63,6 +64,13 @@ class Manager:
         found_chores = set(c for c in self.configuration.chores if c.on(date))
         logger.info(f"Found chores on {date}: {[c.name for c in found_chores]}")
         return found_chores
+
+    def update_experience(self):
+        for r in self.rota.rows:
+            for a in r.assignments:
+                if a.trainee is not None:
+                    t = person.find_person(a.trainee.name, self.configuration.people)
+                    t.add_to_experience(a.chore)
 
     def find_assignment(
         self, date: datetime.date, person_name: str
@@ -235,10 +243,10 @@ class Manager:
                 else:
                     if (
                         updated_trainee is not None
-                        and updated_trainee.can_be_trained(a.chore, a.date) == False
+                        and updated_trainee.available(a.date) == False
                     ):
                         logger.info(
-                            f"Removing {a.trainee.name} - no longer can be trained on {a.date}"
+                            f"Removing {a.trainee.name} - no longer available on {a.date}"
                         )
                         a.trainee.reduce_experience(a.chore)
                         a.trainee = None
