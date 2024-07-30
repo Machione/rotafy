@@ -78,7 +78,7 @@ class Notifier:
         else:
             api_response_data = ast.literal_eval(api_response)
             statuses = [m["status"] for m in api_response_data["data"]["messages"]]
-            if any(statuses != "SUCCESS"):
+            if any([status != "SUCCESS" for status in statuses]):
                 raise
             logger.info(f"API Response: {api_response}")
             logger.info(f"All {len(self.queue)} messages in queue sent")
