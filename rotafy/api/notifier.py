@@ -2,6 +2,7 @@ import clicksend_client
 import logging
 import datetime
 import jinja2
+import json
 from rotafy.config import person
 from rotafy.rota import assignment, printable
 
@@ -75,7 +76,8 @@ class Notifier:
         except Exception as e:
             raise e
         else:
-            statuses = [m["status"] for m in api_response["data"]["messages"]]
+            api_response_data = json.loads(api_response)
+            statuses = [m["status"] for m in api_response_data["data"]["messages"]]
             if any(statuses != "SUCCESS"):
                 raise
             logger.info(f"API Response: {api_response}")
