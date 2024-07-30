@@ -76,10 +76,15 @@ class Notifier:
         except Exception as e:
             raise e
         else:
+            logger.info(f"API Response: {api_response}")
+
             api_response_data = ast.literal_eval(api_response)
             statuses = [m["status"] for m in api_response_data["data"]["messages"]]
-            if any([status != "SUCCESS" for status in statuses]):
-                raise
-            logger.info(f"API Response: {api_response}")
+            unsuccessful_statuses = [
+                status for status in statuses if status != "SUCCESS"
+            ]
+            if len(unsuccessful_statuses) > 0:
+                raise APIStatusNotSuccessful(unsuccessful_statuses[0])
+
             logger.info(f"All {len(self.queue)} messages in queue sent")
             self.queue = []
