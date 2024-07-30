@@ -64,9 +64,10 @@ class Notifier:
     def send(self) -> None:
         messages_to_send = clicksend_client.SmsMessageCollection(messages=[self.queue])
         try:
-            self.clicksend_api.sms_send_post(messages_to_send)
+            api_response = self.clicksend_api.sms_send_post(messages_to_send)
         except Exception as e:
             raise e
         else:
+            logger.info(f"API Response: {api_response}")
             logger.info(f"All {len(self.queue)} messages in queue sent")
             self.queue = []
