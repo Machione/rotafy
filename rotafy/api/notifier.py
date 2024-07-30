@@ -9,6 +9,13 @@ from rotafy.rota import assignment, printable
 logger = logging.getLogger(__name__)
 
 
+class APIStatusNotSuccessful(Exception):
+    def __init__(self, status_message: str) -> None:
+        super().__init__(
+            f"API returned status message '{status_message}'. See https://developers.clicksend.com/docs/#status-codes for more information."
+        )
+
+
 class Notifier:
     def __init__(
         self, clicksend_username: str, clicksend_api_key: str, message_template: str
@@ -68,6 +75,9 @@ class Notifier:
         except Exception as e:
             raise e
         else:
+            statuses = [m["status"] for m in api_response["data"]["messages"]]
+            if any(statuses != "SUCCESS"):
+                raise
             logger.info(f"API Response: {api_response}")
             logger.info(f"All {len(self.queue)} messages in queue sent")
             self.queue = []
