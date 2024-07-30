@@ -33,7 +33,11 @@ def test_init(test_chore):
 def test_name():
     with pytest.raises(chore.NoChoreName):
         basic_chore_generator("")
+
+    with pytest.raises(chore.NoChoreName):
         basic_chore_generator(None)
+
+    with pytest.raises(chore.NoChoreName):
         basic_chore_generator("    ")
 
     malformed = basic_chore_generator("  malformed  ")

@@ -39,10 +39,10 @@ class Rota:
         if date != new_row.date:
             raise MismatchedDates(date, new_row.date)
 
-        return self.add_row(new_row)
+        self.add_row(new_row)
 
     def __delitem__(self, date: datetime.date) -> None:
-        return self.delete_row(date)
+        self.delete_row(date)
 
     def load(self) -> None:
         if os.path.exists(self.file_path):

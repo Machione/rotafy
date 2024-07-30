@@ -121,7 +121,7 @@ class Person:
 
     @name.setter
     def name(self, value: str) -> None:
-        if len(value.strip()) == 0:
+        if value is None or len(value.strip()) == 0:
             raise NoPersonName
 
         self._name = value.strip()

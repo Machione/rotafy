@@ -41,7 +41,7 @@ data = {
 
 bare_data = {
     "name": "bare",
-    "chore": [{"name": "test_chore", "recurrence": "every day"}],
+    "chore": [{"name": "test_chore", "recurrence": "every day", "notify": True}],
     "person": [{"name": "John"}],
 }
 
@@ -81,17 +81,11 @@ def init_tester(cfg, raw_data):
 
     assert cfg.name == raw_data["name"]
 
-    if "lookahead_days" in raw_data.keys():
-        assert cfg.lookahead_days == raw_data["lookahead_days"]
-
-    if "clicksend_username" in raw_data.keys():
-        assert cfg.clicksend_username == raw_data["clicksend_username"]
-
-    if "clicksend_api_key" in raw_data.keys():
-        assert cfg.clicksend_api_key == raw_data["clicksend_api_key"]
-
-    if "message" in raw_data.keys():
-        assert cfg.message_template == raw_data["message"]
+    assert cfg.lookahead_days == raw_data.get("lookahead_days", 14)
+    assert cfg.clicksend_username == raw_data.get("clicksend_username", "")
+    assert cfg.clicksend_api_key == raw_data.get("clicksend_api_key", "")
+    assert len(cfg.message_template) > 0
+    assert isinstance(cfg.message_template, str)
 
     assert len(cfg.chores) == len(raw_data["chore"])
     for i, raw_chore in enumerate(raw_data["chore"]):
@@ -101,36 +95,25 @@ def init_tester(cfg, raw_data):
         assert c.ordinal == i
         assert c._raw_recurrence == raw_chore["recurrence"]
 
-        if "notify" in raw_chore.keys():
-            if isinstance(raw_chore["notify"], bool) and raw_chore["notify"] == True:
-                if "default_notification_days" in raw_data.keys():
-                    assert c.notify == raw_data["default_notification_days"]
-                else:
-                    assert c.notify == 1
-            else:
-                assert c.notify == raw_chore["notify"]
-
-        if "required_training_sessions" in raw_chore.keys():
-            assert c.num_training_sessions == raw_chore["required_training_sessions"]
-        elif "default_number_of_training_sessions" in raw_data.keys():
-            assert (
-                c.num_training_sessions
-                == raw_data["default_number_of_training_sessions"]
-            )
-
-        if "required_shadowing_sessions" in raw_chore.keys():
-            assert c.num_shadowing_sessions == raw_chore["required_shadowing_sessions"]
-        elif "default_number_of_shadowing_sessions" in raw_data.keys():
-            assert (
-                c.num_shadowing_sessions
-                == raw_data["default_number_of_shadowing_sessions"]
-            )
-
-        if "exceptions" in raw_chore.keys():
-            for dt in raw_chore["exceptions"]:
-                assert dt in c.exceptions
+        if raw_chore.get("notify", False) == False:
+            assert c.notify == False
+        elif isinstance(raw_chore.get("notify"), bool):
+            assert c.notify == raw_data.get("default_notification_days", 1)
         else:
-            assert len(c.exceptions) == 0
+            assert c.notify == raw_chore["notify"]
+
+        assert c.num_training_sessions == raw_chore.get(
+            "required_training_sessions",
+            raw_data.get("default_number_of_training_sessions", 1),
+        )
+        assert c.num_shadowing_sessions == raw_chore.get(
+            "required_shadowing_sessions",
+            raw_data.get("default_number_of_shadowing_sessions", 1),
+        )
+
+        assert len(c.exceptions) == len(raw_chore.get("exceptions", []))
+        for dt in raw_chore.get("exceptions", []):
+            assert dt in c.exceptions
 
     assert len(cfg.people) == len(raw_data["person"])
     for raw_person in raw_data["person"]:
@@ -148,14 +131,10 @@ def init_tester(cfg, raw_data):
         else:
             assert len(p.skills) == 0
 
-        if "telephone" in raw_person.keys():
-            assert p.telephone == str(raw_person["telephone"])
-
-        if "unavailable" in raw_person.keys():
-            for date in raw_person["unavailable"]:
-                assert date in p.unavailable
-        else:
-            assert len(p.unavailable) == 0
+        assert p.telephone == str(raw_person.get("telephone", ""))
+        assert len(p.unavailable) == len(raw_person.get("unavailable", []))
+        for dt in raw_person.get("unavailable", []):
+            assert dt in p.unavailable
 
         if "training" in raw_person.keys():
             for chore_name in raw_person["training"]:

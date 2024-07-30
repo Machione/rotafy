@@ -18,7 +18,7 @@ def test_chores_on():
     raise NotImplementedError()
 
 
-def update_experience():
+def test_update_experience():
     raise NotImplementedError()
 
 
@@ -63,4 +63,8 @@ def test_fill():
 
 
 def test_notify():
+    raise NotImplementedError()
+
+
+def test_notified_send():
     raise NotImplementedError()

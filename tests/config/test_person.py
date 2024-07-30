@@ -47,7 +47,11 @@ def test_init(test_person):
 def test_name():
     with pytest.raises(person.NoPersonName):
         basic_person_generator("")
+
+    with pytest.raises(person.NoPersonName):
         basic_person_generator(None)
+
+    with pytest.raises(person.NoPersonName):
         basic_person_generator("    ")
 
     malformed = basic_person_generator("  malformed  ")

@@ -134,7 +134,7 @@ def test_add_row(test_rota, loadable_rota, test_row):
         assert a in loadable_rota[loadable_rota_date].assignments
 
 
-def test_del_item(test_rota, loadable_rota):
+def test_delete_row(test_rota, loadable_rota):
     today = datetime.date.today()
     test_rota.delete_row(today)
     assert len(test_rota.rows) == 0
