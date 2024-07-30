@@ -347,7 +347,13 @@ class Manager:
             return
 
         for c in chores_to_assign:
+            existing_row = self.rota[date]
+            existing_assignments = []
+            if existing_row is not None:
+                existing_assignments = [existing_row[c] for c in chores_on_date]
+            existing_assignments = [a for a in existing_assignments if a is not None]
             unchanged_assignments = [a for a in existing_assignments if a.chore != c]
+
             choices = self.all_independently_valid_assignments(date, c)
             valid_rows = []
             for choice in choices:
