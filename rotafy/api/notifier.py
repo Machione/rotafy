@@ -57,10 +57,6 @@ class Notifier:
         )
 
         logger.info(f"Adding message '{message}' to {recipient.telephone} to queue")
-        logger.info(f"{type(message)}: '{message}'")
-        logger.info(f"{type(recipient.telephone)}: '{recipient.telephone}'")
-        logger.info(self.clicksend_api.api_client.configuration.username)
-        logger.info(self.clicksend_api.api_client.configuration.password)
         sms = clicksend_client.SmsMessage(
             source="Rotafy", body=message, to=recipient.telephone
         )
