@@ -59,7 +59,6 @@ class Notifier:
         logger.info(f"Adding message '{message}' to {recipient.telephone} to queue")
         logger.info(f"{type(message)}: '{message}'")
         logger.info(f"{type(recipient.telephone)}: '{recipient.telephone}'")
-        logger.info(f"{type(recipient.telephone)}: '{recipient.telephone}'")
         logger.info(self.clicksend_api.api_client.configuration.username)
         logger.info(self.clicksend_api.api_client.configuration.password)
         sms = clicksend_client.SmsMessage(
@@ -75,7 +74,7 @@ class Notifier:
             self.add_to_queue(assignment_to_notify.trainee, assignment_to_notify)
 
     def send(self) -> None:
-        messages_to_send = clicksend_client.SmsMessageCollection(messages=[self.queue])
+        messages_to_send = clicksend_client.SmsMessageCollection(messages=self.queue)
         try:
             api_response = self.clicksend_api.sms_send_post(messages_to_send)
         except Exception as e:
