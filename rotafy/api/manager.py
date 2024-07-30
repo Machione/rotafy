@@ -346,6 +346,7 @@ class Manager:
         if len(chores_to_assign) == 0:
             return
 
+        # TODO: Work from the chore with the least possible assignments to the most.
         for c in chores_to_assign:
             existing_row = self.rota[date]
             existing_assignments = []
@@ -395,9 +396,12 @@ class Manager:
             if r.date not in all_lookahead_days:
                 all_lookahead_days.append(row.date)
 
-        logger.info(f"Attempting to fill assignments for {all_lookahead_days}")
-        all_lookahead_days.sort()
-        for date in all_lookahead_days:
+        chores_on_dates = [
+            date for date in all_lookahead_days if len(self.chores_on(date)) > 0
+        ]
+        logger.info(f"Attempting to fill assignments for {chores_on_dates}")
+        chores_on_dates.sort()
+        for date in chores_on_dates:
             self.assign_chores_on(date)
 
         self.rota.save()
