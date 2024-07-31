@@ -83,7 +83,8 @@ class Manager:
         person_assignment = [
             a
             for a in existing_row.assignments
-            if a.person.name == person_name or a.trainee.name == person_name
+            if a.person.name == person_name
+            or (a.trainee is not None and a.trainee.name == person_name)
         ]
         if len(person_assignment) != 1:
             logger.info(f"No existing assignment for {person_name} on {date}")
