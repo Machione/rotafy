@@ -51,7 +51,9 @@ class Manager:
             self.configuration.clicksend_api_key,
             self.configuration.message_template,
         )
-        self.update_experience()
+        self.update_chores()
+        self.update_people()
+
         self.check_and_heal()
 
     def print(self) -> None:
@@ -65,12 +67,27 @@ class Manager:
         logger.info(f"Found chores on {date}: {[c.name for c in found_chores]}")
         return found_chores
 
-    def update_experience(self):
+    def update_chores(self):
+        # TODO: This could be used to find which assignments need to be reassigned.
         for r in self.rota.rows:
             for a in r.assignments:
+                c = chore.find_chore(a.chore.name, self.configuration.chores)
+                if c is not None:
+                    a.chore = c
+
+    def update_people(self):
+        # TODO: This could be used to find which assignments need to be reassigned.
+        for r in self.rota.rows:
+            for a in r.assignments:
+                p = person.find_person(a.person.name, self.configuration.people)
+                if p is not None:
+                    a.person = p
+
                 if a.trainee is not None:
                     t = person.find_person(a.trainee.name, self.configuration.people)
-                    t.add_to_experience(a.chore)
+                    if t is not None:
+                        a.trainee = t
+                        a.trainee.add_to_experience(a.chore)
 
     def find_assignment(
         self, date: datetime.date, person_name: str
