@@ -328,6 +328,7 @@ class Manager:
         return weight
 
     def assign_chores_on(self, date: datetime.date) -> None:
+        # TODO: Add dry-run option.
         chores_on_date = self.chores_on(date)
         if len(chores_on_date) == 0:
             logger.info(f"No chores on {date} to assign")
