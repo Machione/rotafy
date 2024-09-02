@@ -71,23 +71,30 @@ class Manager:
         # TODO: This could be used to find which assignments need to be reassigned.
         for r in self.rota.rows:
             for a in r.assignments:
-                c = chore.find_chore(a.chore.name, self.configuration.chores)
-                if c is not None:
-                    a.chore = c
+                try:
+                    a.chore = chore.find_chore(a.chore.name, self.configuration.chores)
+                except chore.ChoreNotFound:
+                    continue
 
     def update_people(self):
         # TODO: This could be used to find which assignments need to be reassigned.
         for r in self.rota.rows:
             for a in r.assignments:
-                p = person.find_person(a.person.name, self.configuration.people)
-                if p is not None:
-                    a.person = p
+                try:
+                    a.person = person.find_person(
+                        a.person.name, self.configuration.people
+                    )
+                except person.PersonNotFound:
+                    continue
 
                 if a.trainee is not None:
-                    t = person.find_person(a.trainee.name, self.configuration.people)
-                    if t is not None:
-                        a.trainee = t
+                    try:
+                        a.trainee = person.find_person(
+                            a.trainee.name, self.configuration.people
+                        )
                         a.trainee.add_to_experience(a.chore)
+                    except person.PersonNotFound:
+                        continue
 
     def find_assignment(
         self, date: datetime.date, person_name: str
