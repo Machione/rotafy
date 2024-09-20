@@ -203,8 +203,12 @@ class Manager:
 
         logger.info(f"Replacing {person_name} with {replacement_name} on {date}")
 
+        existing_assignment = self.find_assignment(date, person_name)
+        if existing_assignment is None:
+            raise PersonNotAssigned(date, person_name)
+
         self.remove_person(date, person_name)
-        self.add_person(date, replacement_name)
+        self.add_person(date, existing_assignment.chore.name, replacement_name)
 
     def check_and_heal(self):
         # Remove all chores that no longer should be carried out and assigned people
