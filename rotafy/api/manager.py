@@ -131,7 +131,10 @@ class Manager:
         )
 
         new_row = existing_row
-        if person_assignment.trainee.name == person_name:
+        if (
+            person_assignment.trainee is not None
+            and person_assignment.trainee.name == person_name
+        ):
             person_assignment.trainee.reduce_experience(person_assignment.chore)
             person_assignment.trainee = None
             new_row[person_assignment.chore] = person_assignment
