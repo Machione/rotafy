@@ -25,6 +25,13 @@ class PersonNotAssigned(Exception):
         )
 
 
+class ChoreNotAssigned(Exception):
+    def __init__(self, date: datetime.date, chore_name: str) -> None:
+        super().__init__(
+            f"{chore_name} is not assigned to a person on {date}. Try `add_person` instead."
+        )
+
+
 class ReplacementPersonAlreadyAssigned(Exception):
     def __init__(self, date: datetime.date, person_name: str) -> None:
         super().__init__(
@@ -165,6 +172,26 @@ class Manager:
             new_row[chore_to_do] = new_assignment
 
         self.rota[date] = new_row
+        self.rota.save()
+
+    def add_trainee(
+        self, date: datetime.date, chore_name: str, person_name: str
+    ) -> None:
+        chore_to_do = chore.find_chore(chore_name, self.configuration.chores)
+        trainee_to_assign = person.find_person(person_name, self.configuration.people)
+
+        logger.info(f"Adding {person_name} to {chore_name} on {date}")
+
+        existing_row = self.rota[date]
+        if existing_row is None:
+            raise DateNotFound(date)
+
+        existing_assignment = existing_row[chore_to_do]
+        if existing_assignment is None:
+            raise ChoreNotAssigned(date, chore_name)
+
+        existing_assignment.trainee = trainee_to_assign
+        self.rota[date][chore_to_do] = existing_assignment
         self.rota.save()
 
     def swap(self, date: datetime.date, person1_name: str, person2_name: str) -> None:

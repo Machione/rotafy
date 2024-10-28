@@ -52,6 +52,15 @@ def assign(m, date, chore, person):
     m.add_person(date.date(), chore, person)
 
 
+@cli.command(help="Assign a trainee to a chore on a given date.")
+@click.argument("date", type=click.DateTime(), required=True)
+@click.argument("chore", type=click.STRING, required=True)
+@click.argument("person", type=click.STRING, required=True)
+@click.pass_obj
+def train(m, date, chore, person):
+    m.add_trainee(date.date(), chore, person)
+
+
 @cli.command(help="Swap two peoples' assigned chores on the same date.")
 @click.argument("date", type=click.DateTime(), required=True)
 @click.argument("person1", type=click.STRING, required=True)
