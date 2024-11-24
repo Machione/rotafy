@@ -61,6 +61,9 @@ def train(m, date, chore, person):
     m.add_trainee(date.date(), chore, person)
 
 
+# TODO: Add a reassign to overwrite any assigned chore...
+
+
 @cli.command(help="Swap two peoples' assigned chores on the same date.")
 @click.argument("date", type=click.DateTime(), required=True)
 @click.argument("person1", type=click.STRING, required=True)
