@@ -46,6 +46,10 @@ class Notifier:
     def add_to_queue(
         self, recipient: person.Person, assignment_to_notify: assignment.Assignment
     ) -> None:
+        if assignment_to_notify.date < datetime.date.today():
+            logger.error(f"Cannot notify for an assignment in the past.")
+            return
+
         assignment_str = str(assignment_to_notify)
         assignment_msg = assignment_str.replace(recipient.name, "you")
 
