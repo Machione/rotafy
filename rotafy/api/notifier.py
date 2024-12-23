@@ -74,6 +74,9 @@ class Notifier:
             self.add_to_queue(assignment_to_notify.trainee, assignment_to_notify)
 
     def send(self) -> None:
+        if len(self.queue) == 0:
+            return
+        
         messages_to_send = clicksend_client.SmsMessageCollection(messages=self.queue)
         try:
             api_response = self.clicksend_api.sms_send_post(messages_to_send)
