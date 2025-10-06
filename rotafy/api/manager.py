@@ -209,17 +209,22 @@ class Manager:
 
         logger.info(f"Swapping {person1_name} and {person2_name} on {date}")
 
-        person1_assigned_as_trainee = person1_assignment.trainee.name == person1_name
-        person2_assigned_as_trainee = person2_assignment.trainee.name == person2_name
+        person1_assigned_as_trainee = False
+        if person1_assignment.trainee is not None:
+            person1_assigned_as_trainee = person1_assignment.trainee.name == person1_name
+        
+        person2_assigned_as_trainee = False
+        if person2_assignment.trainee is not None:
+            person2_assigned_as_trainee = person2_assignment.trainee.name == person2_name
 
         self.remove_person(date, person1_name)
         self.remove_person(date, person2_name)
 
         if not (person1_assigned_as_trainee):
-            self.add_person(date, person1_assignment.chore, person2_name)
+            self.add_person(date, person1_assignment.chore.name, person2_name)
 
         if not (person2_assigned_as_trainee):
-            self.add_person(date, person2_assignment.chore, person1_name)
+            self.add_person(date, person2_assignment.chore.name, person1_name)
 
     def replace(
         self, date: datetime.date, person_name: str, replacement_name: str
@@ -431,6 +436,7 @@ class Manager:
                     logger.info(f"Re-evaluating all chores due on {date}")
                     del self.rota[date]
                     self.assign_chores_on(date)
+                    return
                 else:
                     raise NoValidAssignments(date)
 
