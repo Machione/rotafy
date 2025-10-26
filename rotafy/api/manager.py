@@ -248,6 +248,7 @@ class Manager:
         upcoming_rota = self.rota.rows_after(datetime.date.today(), True)
         for row in upcoming_rota:
             for a in row.assignments:
+                updated_chore = None
                 try:
                     updated_chore = chore.find_chore(
                         a.chore.name, self.configuration.chores
@@ -261,6 +262,7 @@ class Manager:
                     else:
                         del self.rota[row.date][a.chore]
 
+                updated_person = None
                 try:
                     updated_person = person.find_person(
                         a.person.name, self.configuration.people
@@ -290,8 +292,11 @@ class Manager:
                         updated_trainee = None
 
                 if (
-                    updated_chore.on(a.date) == False
-                    or updated_person.available(a.date) == False
+                    updated_chore is not None and 
+                    updated_person is not None and (
+                        updated_chore.on(a.date) == False
+                        or updated_person.available(a.date) == False
+                    )
                 ):
                     if updated_chore.on(a.date) == False:
                         logger.info(f"Removing {a.chore.name} - no longer on {a.date}")
