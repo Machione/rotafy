@@ -181,3 +181,96 @@ def test_get_chores_from_names(test_config):
     assert test_config._get_chores_from_names(["ANY"]) == test_config.chores
     assert test_config._get_chores_from_names(["ALL"]) == test_config.chores
     assert test_config._get_chores_from_names(["aLl"]) == test_config.chores
+
+
+def test_config_creation():
+    """Test creating a configuration from a dictionary."""
+    config_data = {
+        "name": "Test Rota",
+        "chores": [
+            {"name": "Dishes", "frequency": "daily", "people": ["Alice", "Bob"]},
+            {"name": "Vacuum", "frequency": "weekly", "people": ["Alice", "Bob", "Charlie"]},
+        ],
+        "people": [
+            {"name": "Alice", "experience": ["Dishes"]},
+            {"name": "Bob", "experience": ["Vacuum"]},
+            {"name": "Charlie", "experience": []},
+        ],
+    }
+    cfg = config.Config(config_data)
+    assert cfg.name == "Test Rota"
+    assert len(cfg.chores) == 2
+    assert len(cfg.people) == 3
+
+
+def test_chore_creation():
+    """Test creating a chore."""
+    chore_data = {
+        "name": "Dishes",
+        "frequency": "daily",
+        "people": ["Alice", "Bob"]
+    }
+    c = chore.Chore(chore_data)
+    assert c.name == "Dishes"
+    assert c.frequency == "daily"
+    assert c.people == ["Alice", "Bob"]
+
+
+def test_person_creation():
+    """Test creating a person."""
+    person_data = {
+        "name": "Alice",
+        "experience": ["Dishes"]
+    }
+    p = person.Person(person_data)
+    assert p.name == "Alice"
+    assert p.experience == ["Dishes"]
+
+
+def test_find_chore():
+    """Test finding a chore by name."""
+    chores = [
+        chore.Chore({"name": "Dishes", "frequency": "daily", "people": ["Alice"]}),
+        chore.Chore({"name": "Vacuum", "frequency": "weekly", "people": ["Bob"]})
+    ]
+    found = chore.find_chore("Dishes", chores)
+    assert found.name == "Dishes"
+    with pytest.raises(chore.ChoreNotFound):
+        chore.find_chore("NonExistent", chores)
+
+
+def test_find_person():
+    """Test finding a person by name."""
+    people = [
+        person.Person({"name": "Alice", "experience": ["Dishes"]}),
+        person.Person({"name": "Bob", "experience": ["Vacuum"]})
+    ]
+    found = person.find_person("Alice", people)
+    assert found.name == "Alice"
+    with pytest.raises(person.PersonNotFound):
+        person.find_person("NonExistent", people)
+
+
+def test_chore_on_date():
+    """Test checking if a chore should be done on a specific date."""
+    daily_chore = chore.Chore({"name": "Dishes", "frequency": "daily", "people": ["Alice"]})
+    weekly_chore = chore.Chore({"name": "Vacuum", "frequency": "weekly", "people": ["Bob"]})
+    
+    test_date = datetime.date(2024, 1, 1)
+    assert daily_chore.on(test_date)  # Daily chores should be done every day
+    assert weekly_chore.on(test_date)  # Weekly chores should be done on Mondays
+
+
+def test_person_experience():
+    """Test managing person's experience with chores."""
+    p = person.Person({"name": "Alice", "experience": ["Dishes"]})
+    assert "Dishes" in p.experience
+    assert "Vacuum" not in p.experience
+    
+    # Test adding experience
+    p.add_to_experience("Vacuum")
+    assert "Vacuum" in p.experience
+    
+    # Test reducing experience
+    p.reduce_experience("Vacuum")
+    assert "Vacuum" not in p.experience
