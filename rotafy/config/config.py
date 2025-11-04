@@ -1,4 +1,5 @@
 import toml
+import os
 from typing import Iterable
 from rotafy.config import chore, person
 
@@ -11,8 +12,17 @@ class Config:
         self.name = self.raw["name"]
 
         self.lookahead_days = self.raw.get("lookahead_days", 14)
-        self.clicksend_username = self.raw.get("clicksend_username", "")
-        self.clicksend_api_key = self.raw.get("clicksend_api_key", "")
+
+        if "CLICKSEND_USERNAME" in os.environ:
+            self.clicksend_username = os.environ.get("CLICKSEND_USERNAME", "")
+        else:
+            self.clicksend_username = self.raw.get("clicksend_username", "")
+        
+        if "CLICKSEND_API_KEY" in os.environ:
+            self.clicksend_api_key = os.environ.get("CLICKSEND_API_KEY", "")
+        else:
+            self.clicksend_api_key = self.raw.get("clicksend_api_key", "")
+        
         self.message_template = self.raw.get(
             "message",
             "Hi {{recipient}}! On {{date}}, {{chore}} is due to be handled by "

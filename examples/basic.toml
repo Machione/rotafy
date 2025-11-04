@@ -5,8 +5,8 @@ default_number_of_training_sessions = 1
 default_number_of_shadowing_sessions = 1
 default_notification_days = 1
 
-clicksend_username = "test1@test.com"
-clicksend_api_key = "D83DED51-9E35-4D42-9BB9-0E34B7CA85AE"
+clicksend_username = "test1@test.com"  # This can also be passed in an environment variable called CLICKSEND_USERNAME
+clicksend_api_key = "D83DED51-9E35-4D42-9BB9-0E34B7CA85AE"  # This can also be passed in an environment variable called CLICKSEND_API_KEY
 message = "Hi {{recipient}}! This is an automated reminder. On {{date}}, {{chore}} will be handled by {{assignment}}. Post in our WhatsApp group if you need a replacement."
 
 [[chore]]
