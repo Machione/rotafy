@@ -82,5 +82,10 @@ def replace(m, date, person, replacement):
     m.replace(date.date(), person, replacement)
 
 
+@cli.command("path", help="Print the path where the rota is stored.")
+@click.pass_obj
+def print_rota_path(m):
+    m.print_path()
+
 if __name__ == "__main__":
     cli()

@@ -65,6 +65,9 @@ class Manager:
 
     def print(self) -> None:
         self.rota.print()
+    
+    def print_path(self) -> None:
+        print(self.rota.file_path)
 
     def to_pdf(self, output_file: str) -> None:
         self.rota.pdf(output_file)
